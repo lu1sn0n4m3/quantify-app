@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Widgets Demo</title>
+<style>
+  body {
+    background: #f5f5f3;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    height: 100vh;
+    margin: 0;
+    padding-top: 40px;
+    overflow: hidden;
+  }
+  .view-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .placeholder, .widget {
+    width: 600px;
+    height: 300px;
+    margin: 20px;
+    border-radius: 20px;
+    background: #f5f5f3;
+    box-shadow: 7px 7px 14px #bebebe, -7px -7px 14px #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.35s ease;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .plus {
+    font-size: 48px;
+    color: #999;
+    cursor: pointer;
+    user-select: none;
+  }
+  .popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #f5f5f3;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 7px 7px 14px #bebebe, -7px -7px 14px #ffffff;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2000;
+  }
+  .popup input {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    width: 200px;
+    margin-bottom: 10px;
+    box-shadow: inset 3px 3px 6px #d1d1d1, inset -3px -3px 6px #ffffff;
+  }
+  .popup button {
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    background: #f5f5f3;
+    box-shadow: 3px 3px 6px #bebebe, -3px -3px 6px #ffffff;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .close-btn, .expand-btn {
+    position: absolute;
+    top: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #999;
+    z-index: 2;
+  }
+  .close-btn { right: 15px; }
+  .expand-btn { left: 15px; font-size: 20px; }
+
+  /* Content areas inside widgets */
+  .widget-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .visual-area { /* chart or news lives here */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .summary { /* hidden by default */
+    display: none;
+    width: 85%;
+    margin: 12px auto 16px auto;
+    padding: 14px 16px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #ffffff, #e8e8e8);
+    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
+    font-size: 15px;
+    color: #555;
+    text-align: center;
+  }
+
+  /* In-view expansion: overlay the entire 2-slot view area, but keep visual area same height */
+  .expanded-overlay-card {
+    position: absolute !important;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px !important; /* bounds of view */
+    height: 640px !important; /* two placeholders (300 + 20 margin top/bottom each) simplified */
+    z-index: 10;
+    border-radius: 20px;
+    box-shadow: 10px 10px 24px #bcbcbc, -10px -10px 24px #ffffff;
+    overflow: visible; /* allow summary within */
+  }
+  .expanded-overlay-card .visual-area {
+    height: 300px; /* keep original widget visual height */
+  }
+  .expanded-overlay-card .summary {
+    display: block; /* show the summary only when expanded */
+  }
+
+  canvas {
+    width: 90% !important;
+    height: 85% !important;
+  }
+  .news-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 90%;
+    height: 85%;
+    padding: 10px;
+  }
+  .news-item {
+    background: linear-gradient(145deg, #ffffff, #e8e8e8);
+    box-shadow: 3px 3px 8px #bdbdbd, -3px -3px 8px #ffffff;
+    padding: 15px;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .news-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 5px 5px 10px #bdbdbd, -5px -5px 10px #ffffff;
+  }
+  .news-title {
+    font-weight: 700;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 6px;
+  }
+  .news-snippet {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4em;
+  }
+</style>
+</head>
+<body>
+  <div class="view-container" id="view">
+    <div id="placeholder1" class="placeholder"><div class="plus" onclick="openPopup(1)">+</div></div>
+    <div id="placeholder2" class="placeholder"><div class="plus" onclick="openPopup(2)">+</div></div>
+  </div>
+
+  <div id="popup" class="popup">
+    <input type="text" id="promptInput" placeholder="Type 'news' or 'chart'">
+    <button onclick="handleGo()">Go</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    let currentPlaceholder = null;
+
+    function openPopup(num) {
+      currentPlaceholder = num;
+      document.getElementById('popup').style.display = 'flex';
+      document.getElementById('promptInput').value = '';
+    }
+
+    function closePopup() {
+      document.getElementById('popup').style.display = 'none';
+    }
+
+    function handleGo() {
+      const input = document.getElementById('promptInput').value.trim().toLowerCase();
+      const placeholder = document.getElementById('placeholder' + currentPlaceholder);
+      placeholder.innerHTML = '';
+
+      if (input === 'news') {
+        createNewsWidget(placeholder);
+      } else if (input === 'chart') {
+        createChartWidget(placeholder);
+      } else {
+        placeholder.innerHTML = '<div class="plus" onclick="openPopup(' + currentPlaceholder + ')">+</div>';
+        alert('Type "news" or "chart"');
+      }
+      closePopup();
+    }
+
+    function createControls(container, type) {
+      const close = document.createElement('div');
+      close.className = 'close-btn';
+      close.innerHTML = '&times;';
+      close.onclick = () => {
+        // If expanded, first collapse to avoid stale state
+        if (container.classList.contains('expanded-overlay-card')) {
+          toggleExpand(container, type, true);
+        }
+        // Safely destroy chart instance if exists
+        const canvas = container.querySelector('canvas');
+        if (canvas) {
+          const inst = Chart.getChart(canvas);
+          if (inst) inst.destroy();
+        }
+        container.className = 'placeholder';
+        container.innerHTML = '<div class="plus" onclick="openPopup(' + container.id.replace('placeholder','') + ')">+</div>';
+      };
+
+      const expand = document.createElement('div');
+      expand.className = 'expand-btn';
+      expand.innerHTML = '&#8942;';
+      expand.onclick = () => toggleExpand(container, type);
+
+      container.appendChild(close);
+      container.appendChild(expand);
+    }
+
+    function toggleExpand(container, type, forceCollapse = false) {
+      const willExpand = forceCollapse ? false : !container.classList.contains('expanded-overlay-card');
+
+      if (willExpand) {
+        // Move this widget to overlay bounds (covering both placeholders)
+        container.classList.add('expanded-overlay-card');
+        // Ensure summary exists and is visible
+        let summary = container.querySelector('.summary');
+        if (!summary) {
+          summary = document.createElement('div');
+          summary.className = 'summary';
+          summary.innerText = type === 'chart'
+            ? 'This chart shows simulated AAPL price trends. Market tone looks constructive; pullbacks remain shallow.'
+            : 'Apple\'s ecosystem narrative stays intact as services and devices reinforce each other; optimism persists.';
+          container.querySelector('.widget-inner').appendChild(summary);
+        } else {
+          summary.style.display = 'block';
+        }
+        if (type === 'chart') recolorChart(container.querySelector('canvas'));
+      } else {
+        // Collapse back into its slot
+        container.classList.remove('expanded-overlay-card');
+        const summary = container.querySelector('.summary');
+        if (summary) summary.style.display = 'none';
+        if (type === 'chart') recolorChart(container.querySelector('canvas'), true);
+      }
+    }
+
+    function recolorChart(canvas, revert = false) {
+      if (!canvas) return;
+      const chart = Chart.getChart(canvas);
+      if (chart) {
+        chart.data.datasets[0].borderColor = revert ? '#4a4a9e' : 'rgba(255, 99, 132, 0.95)';
+        chart.data.datasets[0].backgroundColor = revert ? 'rgba(74, 74, 158, 0.1)' : 'rgba(255, 99, 132, 0.25)';
+        chart.data.datasets[0].pointBackgroundColor = revert ? '#4a4a9e' : 'rgba(255, 99, 132, 0.95)';
+        chart.update();
+      }
+    }
+
+    function createNewsWidget(container) {
+      container.classList.add('widget');
+      container.innerHTML = '';
+      createControls(container, 'news');
+
+      const inner = document.createElement('div');
+      inner.className = 'widget-inner';
+
+      const visual = document.createElement('div');
+      visual.className = 'visual-area';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'news-container';
+
+      const newsData = [
+        { title: 'Apple unveils new AR headset', snippet: 'The innovative AR device blends digital elements with the physical world, redefining the tech experience.' },
+        { title: 'Analysts raise targets for Apple', snippet: 'Investors remain bullish as Apple diversifies revenue through AI-driven services and ecosystem growth.' }
+      ];
+      newsData.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'news-item';
+        div.innerHTML = `<div class='news-title'>${item.title}</div><div class='news-snippet'>${item.snippet}</div>`;
+        wrapper.appendChild(div);
+      });
+
+      visual.appendChild(wrapper);
+      inner.appendChild(visual);
+      // Summary is added on expand
+      container.appendChild(inner);
+    }
+
+    function createChartWidget(container) {
+      container.classList.add('widget');
+      container.innerHTML = '';
+      createControls(container, 'chart');
+
+      const inner = document.createElement('div');
+      inner.className = 'widget-inner';
+
+      const visual = document.createElement('div');
+      visual.className = 'visual-area';
+
+      const canvas = document.createElement('canvas');
+      visual.appendChild(canvas);
+      inner.appendChild(visual);
+      container.appendChild(inner);
+
+      const ctx = canvas.getContext('2d');
+      const data = Array.from({length: 30}, () => 170 + Math.random() * 10);
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Array.from({length: 30}, (_, i) => 'Day ' + (i+1)),
+          datasets: [{
+            label: 'AAPL Stock Price',
+            data: data,
+            borderColor: '#4a4a9e',
+            backgroundColor: 'rgba(74, 74, 158, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointRadius: 2,
+            pointBackgroundColor: '#4a4a9e'
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Apple Inc. (AAPL) — Simulated Price Trend',
+              color: '#333',
+              font: { size: 16, weight: 'bold' }
+            },
+            tooltip: { enabled: true }
+          },
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { display: false },
+            y: { display: false }
+          }
+        }
+      });
+      // Attach instance to canvas for safe retrieval
+      canvas._chart = chart;
+    }
+  </script>
+</body>
+</html>
