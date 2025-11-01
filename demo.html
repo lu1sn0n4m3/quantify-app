@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Papermorphic UI — Loud Accents</title>
+<style>
+:root{
+  --paper-bg:#f6f6f5;
+  --paper-layer:#fcfbfa;
+  --ink:#232323;
+  --muted:#656565;
+
+  /* stronger, “louder” accent tones (gouache-like) */
+  --accent-green:#6bbf74;
+  --accent-orange:#e59647;
+  --accent-yellow:#f6c847;
+  --accent-red:#e3685d;
+
+  --radius:10px;
+  --shadow-outer:6px 6px 12px rgba(0,0,0,.12),
+                  -2px -2px 4px rgba(255,255,255,.6);
+  --shadow-inner:inset 4px 4px 8px rgba(0,0,0,.12),
+                  inset -1px -1px 2px rgba(255,255,255,.4);
+  --transition:all .25s cubic-bezier(.25,.8,.25,1);
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--paper-bg);
+  color:var(--ink);
+  font-family:var(--font);
+  display:flex;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* subtle paper texture */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none;
+  background-image:radial-gradient(rgba(0,0,0,.015) 1px, transparent 1px);
+  background-size:90px 90px;
+  opacity:.4;
+  mix-blend-mode:multiply;
+}
+
+/* sidebar */
+.sidebar{
+  width:240px;
+  background:var(--paper-layer);
+  box-shadow:var(--shadow-outer);
+  padding:60px 20px 20px;
+  display:flex;flex-direction:column;gap:14px;
+  position:relative;
+  transition:transform .35s ease;
+  z-index:5;
+}
+.sidebar.hidden{transform:translateX(-240px);}
+.sidebar h2{font-size:17px;font-weight:600;margin-bottom:8px;color:var(--muted);}
+.nav-btn{border:none;background:var(--paper-layer);box-shadow:var(--shadow-inner);border-radius:var(--radius);padding:10px 14px;text-align:left;cursor:pointer;color:var(--ink);transition:var(--transition);}
+.nav-btn:hover{box-shadow:var(--shadow-outer);}
+.nav-btn.active{font-weight:600;text-decoration:underline;}
+
+/* sidebar toggle button */
+.sidebar-toggle{
+  position:fixed;
+  top:24px; left:260px;
+  width:44px; height:44px;
+  border:none; border-radius:50%;
+  background:var(--paper-layer);
+  box-shadow:var(--shadow-outer);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:var(--transition);
+  z-index:10;
+}
+.sidebar.hidden + .sidebar-toggle{left:20px;}
+.sidebar-toggle svg{width:22px;height:22px;fill:#444;}
+
+/* main area */
+main{
+  flex:1;
+  padding:40px 28px 80px;
+  display:grid;
+  gap:28px;
+  transition:margin-left .35s ease;
+}
+body.sidebar-hidden main{margin-left:-240px;}
+
+/* paper cards */
+.paper{
+  background:var(--paper-layer);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-outer);
+  padding:24px;
+  transition:var(--transition);
+}
+h1,h2{margin-bottom:8px;font-weight:600;letter-spacing:-.01em;}
+p.sub{color:var(--muted);margin-bottom:12px;font-style:italic;}
+
+/* KPIs */
+.kpis{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));}
+.kpi{border-radius:var(--radius);background:var(--paper-layer);box-shadow:var(--shadow-inner);padding:14px 16px;}
+.kpi h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+.kpi .val{font-size:26px;margin-top:4px;font-variant-numeric:tabular-nums;}
+
+/* input + buttons */
+.controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;}
+input.paper-input{border:none;border-radius:var(--radius);padding:12px 14px;background:var(--paper-layer);box-shadow:var(--shadow-inner);color:var(--ink);transition:var(--transition);}
+input.paper-input:focus{outline:none;box-shadow:inset 3px 3px 6px rgba(0,0,0,.12),inset -2px -2px 4px rgba(255,255,255,.5);}
+.btn{
+  border:none;border-radius:var(--radius);
+  padding:12px 22px;font-weight:600;cursor:pointer;
+  background:var(--paper-layer);
+  color:var(--ink);
+  box-shadow:var(--shadow-outer);
+  transition:var(--transition);
+}
+.btn.toggleable.is-on{
+  box-shadow:var(--shadow-inner);
+  color:#fff;
+}
+.btn.rebalance.is-on{background:var(--accent-green);}
+.btn.export.is-on{background:var(--accent-orange);}
+.btn:hover{transform:translateY(-1px);}
+.btn:active{transform:translateY(0);box-shadow:var(--shadow-inner);}
+
+/* toggle */
+.toggle{
+  position:relative;width:64px;height:34px;border-radius:999px;
+  background:var(--paper-layer);
+  box-shadow:var(--shadow-inner);
+  cursor:pointer;
+}
+.knob{
+  position:absolute;top:5px;left:5px;width:24px;height:24px;border-radius:50%;
+  background:var(--paper-layer);box-shadow:var(--shadow-outer);
+  transition:transform .25s ease,background .25s ease;
+}
+.toggle.on .knob{transform:translateX(30px);background:#222;box-shadow:var(--shadow-inner);}
+
+/* slider */
+.slider{position:relative;width:100%;height:10px;border-radius:10px;background:var(--paper-layer);box-shadow:var(--shadow-inner);cursor:pointer;}
+.thumb{position:absolute;top:-7px;width:22px;height:22px;border-radius:50%;background:var(--paper-layer);box-shadow:var(--shadow-outer);transition:background .2s ease;}
+.thumb.active{background:#222;box-shadow:var(--shadow-inner);}
+
+/* watchlist */
+.list{display:grid;gap:10px;}
+.item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;background:var(--paper-layer);padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow-inner);}
+.ticker{font-weight:600;}
+.chg{font-variant-numeric:tabular-nums;color:var(--muted);}
+.icon-btn{width:36px;height:36px;border:none;border-radius:50%;background:var(--paper-layer);box-shadow:var(--shadow-outer);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);}
+.icon{width:20px;height:20px;fill:#777;transition:fill .15s ease;}
+.icon.star.active{fill:var(--accent-yellow);}
+.icon.bookmark.active{fill:var(--accent-red);}
+
+/* chart */
+canvas{width:100%;height:220px;border-radius:var(--radius);background:var(--paper-layer);box-shadow:var(--shadow-inner);}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <h2>Sections</h2>
+  <button class="nav-btn active">Dashboard</button>
+  <button class="nav-btn">Holdings</button>
+  <button class="nav-btn">Reports</button>
+  <button class="nav-btn">Settings</button>
+</aside>
+
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+  <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zM3 11h18v2H3zM3 16h18v2H3z"/></svg>
+</button>
+
+<main>
+  <section class="paper">
+    <h1>Portfolio Summary</h1>
+    <p class="sub">Accents now carry more pigment — louder but still matte and tactile.</p>
+    <div class="kpis">
+      <div class="kpi"><h3>Equity</h3><div class="val">$1,284,940</div></div>
+      <div class="kpi"><h3>Return</h3><div class="val">+3.84%</div></div>
+      <div class="kpi"><h3>Volatility</h3><div class="val">12.6%</div></div>
+    </div>
+    <div class="controls">
+      <input class="paper-input" placeholder="Search ticker...">
+      <button class="btn toggleable rebalance">Rebalance</button>
+      <button class="btn toggleable export">Export</button>
+    </div>
+  </section>
+
+  <section class="paper">
+    <h2 style="font-size:18px;margin-bottom:10px">Risk Tolerance</h2>
+    <div style="margin-bottom:12px;color:var(--muted);font-size:14px;">Adjust your portfolio risk</div>
+    <div class="slider" id="slider"><div class="thumb" id="thumb"></div></div>
+  </section>
+
+  <section class="paper" style="display:flex;align-items:center;justify-content:space-between;gap:20px;">
+    <div>
+      <h2 style="font-size:18px;margin-bottom:6px">Notifications</h2>
+      <p class="sub">Toggle portfolio alerts</p>
+    </div>
+    <div class="toggle" id="toggle"><div class="knob"></div></div>
+  </section>
+
+  <section class="paper">
+    <h2 style="font-size:18px;margin-bottom:6px;">Equity Curve</h2>
+    <canvas id="lineChart"></canvas>
+  </section>
+
+  <section class="paper">
+    <h2 style="font-size:18px;margin-bottom:6px;">Watchlist</h2>
+    <div class="list" id="watchlist"></div>
+  </section>
+</main>
+
+<script>
+const sidebar=document.getElementById('sidebar');
+const toggleBtn=document.getElementById('sidebarToggle');
+let sidebarHidden=false;
+toggleBtn.addEventListener('click',()=>{
+  sidebarHidden=!sidebarHidden;
+  sidebar.classList.toggle('hidden',sidebarHidden);
+  toggleBtn.style.left=sidebarHidden?'20px':'260px';
+});
+
+document.querySelectorAll('.btn.toggleable').forEach(btn=>{
+  btn.addEventListener('click',()=>btn.classList.toggle('is-on'));
+});
+
+const toggle=document.getElementById('toggle');
+toggle.addEventListener('click',()=>toggle.classList.toggle('on'));
+
+const slider=document.getElementById('slider');
+const thumb=document.getElementById('thumb');
+let dragging=false,val=0.4;
+function setThumb(x){const r=slider.getBoundingClientRect();val=Math.max(0,Math.min(1,(x-r.left)/r.width));thumb.style.left=`calc(${val*100}% - 11px)`;}
+slider.addEventListener('mousedown',e=>{dragging=true;thumb.classList.add('active');setThumb(e.clientX)});
+window.addEventListener('mousemove',e=>{if(dragging)setThumb(e.clientX)});
+window.addEventListener('mouseup',()=>{dragging=false;thumb.classList.remove('active')});
+(()=>{const r=slider.getBoundingClientRect();setThumb(r.left+r.width*val)})();
+
+/* simple line chart */
+const DPR=Math.max(1,window.devicePixelRatio||1);
+const eq=Array.from({length:70},(_,i)=>100+Math.sin(i/8)*8+Math.random()*2);
+function setupCanvas(c){const r=c.getBoundingClientRect();c.width=r.width*DPR;c.height=r.height*DPR;const ctx=c.getContext('2d');ctx.scale(DPR,DPR);return{ctx,w:r.width,h:r.height}}
+function drawLine(c,data){const{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);const L=40,R=w-20,T=20,B=h-30;const max=Math.max(...data),min=Math.min(...data);const step=(R-L)/(data.length-1);ctx.strokeStyle='rgba(0,0,0,0.1)';for(let i=1;i<=4;i++){const y=B-(i/5)*(B-T);ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(R,y);ctx.stroke();}ctx.lineWidth=2;ctx.strokeStyle='#333';ctx.beginPath();data.forEach((v,i)=>{const x=L+i*step;const y=B-((v-min)/(max-min))*(B-T);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();}
+drawLine(document.getElementById('lineChart'),eq);
+
+/* watchlist */
+const watch=[{sym:'AAPL',chg:+1.24},{sym:'MSFT',chg:-0.42},{sym:'NVDA',chg:+2.91},{sym:'AMZN',chg:+0.37},{sym:'TSLA',chg:-1.88}];
+const list=document.getElementById('watchlist');
+function iconStar(a=false){return `<svg class="icon star ${a?'active':''}" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`}
+function iconBookmark(a=false){return `<svg class="icon bookmark ${a?'active':''}" viewBox="0 0 24 24"><path d="M6 2h12a1 1 0 0 1 1 1v19l-7-4-7 4V3a1 1 0 0 1 1-1z"/></svg>`}
+watch.forEach(r=>{
+  const d=document.createElement('div');
+  d.className='item';
+  d.innerHTML=`<div><div class="ticker">${r.sym}</div><div style="font-size:13px;color:var(--muted)">Company</div></div><div class="chg">${r.chg>=0?'+':''}${r.chg.toFixed(2)}%</div><div style="display:flex;gap:8px"><button class="icon-btn">${iconStar()}</button><button class="icon-btn">${iconBookmark()}</button></div>`;
+  list.appendChild(d);
+});
+list.querySelectorAll('.icon-btn').forEach(b=>b.addEventListener('click',()=>b.querySelector('.icon').classList.toggle('active')));
+</script>
+</body>
+</html>

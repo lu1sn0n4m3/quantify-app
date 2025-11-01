@@ -1,0 +1,42 @@
+# Node modules
+node_modules/
+
+# Expo and React Native build artifacts
+.expo/
+.expo-shared/
+dist/
+build/
+web-build/
+android/
+ios/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+expo-debug.log*
+
+# Metro bundler cache
+.metro/
+.expo/
+.expo-shared/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# macOS, Windows, etc.
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Misc
+*.tmp
+*.swp
