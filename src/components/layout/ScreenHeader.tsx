@@ -14,10 +14,11 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
 import { NeoSidebarButton } from '../base/NeoSidebarButton';
 import { colors } from '../../theme/colors';
+import dashboardsConfig from '../../config/dashboards.json';
 
 type ScreenHeaderProps = {
   onClose?: () => void; // If provided, shows close button instead of sidebar button
@@ -25,6 +26,11 @@ type ScreenHeaderProps = {
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ onClose }) => {
   const navigation = useNavigation();
+  const route = useRoute();
+  
+  // Find dashboard name from route
+  const dashboard = dashboardsConfig.dashboards.find(d => d.id === route.name);
+  const title = dashboard ? dashboard.name : 'QuantiFy';
 
   return (
     <>
@@ -38,7 +44,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ onClose }) => {
           // Sidebar button for normal views
           <NeoSidebarButton onPress={() => navigation.dispatch(DrawerActions.openDrawer())} />
         )}
-        <Text style={styles.headerTitle}>QuantiFy</Text>
+        <Text style={styles.headerTitle}>{title}</Text>
         <View style={styles.placeholder} />
       </View>
       <View style={styles.divider} />

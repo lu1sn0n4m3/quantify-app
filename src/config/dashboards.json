@@ -1,0 +1,49 @@
+{
+  "dashboards": [
+    {
+      "id": "portfolio-overview",
+      "name": "Portfolio Overview",
+      "isDefault": true,
+      "widgets": [
+        {
+          "id": "stock-aapl",
+          "type": "StockPriceCard",
+          "props": {}
+        },
+        {
+          "id": "balance-1",
+          "type": "TotalBalanceCard",
+          "props": {}
+        },
+        {
+          "id": "portfolio-1",
+          "type": "PortfolioCard",
+          "props": {}
+        }
+      ]
+    },
+    {
+      "id": "market-watch",
+      "name": "Market Watch",
+      "isDefault": false,
+      "widgets": [
+        {
+          "id": "stock-tsla",
+          "type": "StockPriceCard",
+          "props": {}
+        },
+        {
+          "id": "stock-googl",
+          "type": "StockPriceCard",
+          "props": {}
+        },
+        {
+          "id": "balance-2",
+          "type": "TotalBalanceCard",
+          "props": {}
+        }
+      ]
+    }
+  ]
+}
+

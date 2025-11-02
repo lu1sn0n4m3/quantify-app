@@ -19,4 +19,5 @@ export { TotalBalanceCard } from './TotalBalanceCard';
 export { PortfolioCard } from './PortfolioCard';
 export { StockPriceCard } from './StockPriceCard';
 export { widgetConfig, type WidgetConfig, type WidgetProps } from './widgetRegistry';
+export { widgetComponentRegistry, getWidgetComponent } from './widgetComponentRegistry';
 
