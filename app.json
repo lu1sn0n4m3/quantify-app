@@ -1,19 +1,27 @@
 {
-    "expo": {
-      "name": "quantify",
-      "slug": "quantify",
-      "version": "1.0.0",
-      "orientation": "portrait",
-      "platforms": ["ios", "android", "web"],
-      "sdkVersion": "54.0.0",
-      "entryPoint": "index.js",
-      "assetBundlePatterns": ["**/*"],
-      "ios": {
-        "bundleIdentifier": "com.luissafar.quantify",
-        "supportsTablet": true
-      },
-      "android": {
-        "package": "com.luissafar.quantify"
-      }
-    }
+  "expo": {
+    "name": "quantify",
+    "slug": "quantify",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "sdkVersion": "54.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.luissafar.quantify",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.luissafar.quantify"
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
+}

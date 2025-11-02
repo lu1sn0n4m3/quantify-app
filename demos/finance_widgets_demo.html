@@ -1,370 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finance Widgets Demo</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NeoBrutal Finance — Rewritten Sorting + Fully Clickable Expansions</title>
 <style>
-  body {
-    background: #f5f5f3;
-    font-family: 'Inter', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: start;
-    height: 100vh;
-    margin: 0;
-    padding-top: 40px;
-    overflow: hidden;
-  }
-  .view-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .placeholder, .widget {
-    width: 600px;
-    height: 300px;
-    margin: 20px;
-    border-radius: 20px;
-    background: #f5f5f3;
-    box-shadow: 7px 7px 14px #bebebe, -7px -7px 14px #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: all 0.35s ease;
-    z-index: 1;
-    overflow: hidden;
-  }
-  .plus {
-    font-size: 48px;
-    color: #999;
-    cursor: pointer;
-    user-select: none;
-  }
-  .popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #f5f5f3;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 7px 7px 14px #bebebe, -7px -7px 14px #ffffff;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    z-index: 2000;
-  }
-  .popup input {
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    outline: none;
-    width: 200px;
-    margin-bottom: 10px;
-    box-shadow: inset 3px 3px 6px #d1d1d1, inset -3px -3px 6px #ffffff;
-  }
-  .popup button {
-    padding: 8px 16px;
-    border-radius: 10px;
-    border: none;
-    background: #f5f5f3;
-    box-shadow: 3px 3px 6px #bebebe, -3px -3px 6px #ffffff;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .close-btn, .expand-btn {
-    position: absolute;
-    top: 10px;
-    cursor: pointer;
-    font-size: 18px;
-    color: #999;
-    z-index: 2;
-  }
-  .close-btn { right: 15px; }
-  .expand-btn { left: 15px; font-size: 20px; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: #0f172a; color: #111827; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; display: grid; place-items: start center; min-height: 100vh; }
 
-  /* Content areas inside widgets */
-  .widget-inner {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .visual-area { /* chart or news lives here */
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .summary { /* hidden by default */
-    display: none;
-    width: 85%;
-    margin: 12px auto 16px auto;
-    padding: 14px 16px;
-    border-radius: 15px;
-    background: linear-gradient(145deg, #ffffff, #e8e8e8);
-    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
-    font-size: 15px;
-    color: #555;
-    text-align: center;
-  }
+  .phone { width: 375px; height: 812px; border-radius: 42px; background: #0b0f1a; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.6); overflow: hidden; }
+  .notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-bottom-left-radius: 18px; border-bottom-right-radius: 18px; z-index: 10; }
 
-  /* In-view expansion: overlay the entire 2-slot view area, but keep visual area same height */
-  .expanded-overlay-card {
-    position: absolute !important;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px !important; /* bounds of view */
-    height: 640px !important; /* two placeholders (300 + 20 margin top/bottom each) simplified */
-    z-index: 10;
-    border-radius: 20px;
-    box-shadow: 10px 10px 24px #bcbcbc, -10px -10px 24px #ffffff;
-    overflow: visible; /* allow summary within */
-  }
-  .expanded-overlay-card .visual-area {
-    height: 300px; /* keep original widget visual height */
-  }
-  .expanded-overlay-card .summary {
-    display: block; /* show the summary only when expanded */
-  }
+  .screen { position: absolute; inset: 10px; border-radius: 34px; overflow-y: auto; background: #fef08a; color: #111827; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 18px; position: sticky; top: 0; background: #fef08a; border-bottom: 4px solid #111827; z-index: 5; }
+  .divider { height: 4px; background: #111827; width: 100%; }
 
-  canvas {
-    width: 90% !important;
-    height: 85% !important;
-  }
-  .news-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 90%;
-    height: 85%;
-    padding: 10px;
-  }
-  .news-item {
-    background: linear-gradient(145deg, #ffffff, #e8e8e8);
-    box-shadow: 3px 3px 8px #bdbdbd, -3px -3px 8px #ffffff;
-    padding: 15px;
-    border-radius: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .news-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 5px 5px 10px #bdbdbd, -5px -5px 10px #ffffff;
-  }
-  .news-title {
-    font-weight: 700;
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 6px;
-  }
-  .news-snippet {
-    color: #666;
-    font-size: 14px;
-    line-height: 1.4em;
-  }
+  .widgets { padding-bottom: 100px; position: relative; }
+
+  .card { position: relative; background: #fef3c7; border: 4px solid #111827; border-radius: 18px; box-shadow: 8px 8px 0 #111827; margin: 18px; padding: 14px; transition: transform .18s ease; }
+  .value { font-weight: 800; font-size: 24px; }
+
+  /* Drag handle (left) */
+  .handle { position: absolute; top: 10px; left: 10px; background: #111827; color: #fef08a; border-radius: 6px; padding: 4px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; z-index: 2; }
+  .handle:active { cursor: grabbing; }
+  .dot-vert { width: 4px; height: 4px; border-radius: 50%; background: #fef08a; margin: 2px 0; }
+
+  /* Expand button (right) */
+  .expand-btn { position: absolute; top: 10px; right: 10px; background: #111827; color: #fef08a; border: none; border-radius: 6px; padding: 4px 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+  .dot-horz { width: 4px; height: 4px; border-radius: 50%; background: #fef08a; margin: 0 2px; }
+
+  .news-item { display: flex; gap: 12px; align-items: center; background: #fef3c7; border: 4px solid #111827; border-radius: 18px; box-shadow: 4px 4px 0 #111827; padding: 10px; margin-bottom: 10px; }
+  .thumb { width: 64px; height: 64px; background: #111827; border-radius: 10px; flex-shrink: 0; }
+  .news-text { font-size: 14px; }
+  .news-text span { display: block; font-size: 12px; color: #6b7280; }
+
+  /* Sortable visuals */
+  .drag-ghost { opacity: .7; transform: rotate(1.2deg); }
+  .chosen { transform: scale(1.01); }
+  .dragging { cursor: grabbing; }
+
+  /* Overlay */
+  .overlay-bg { position: absolute; inset: 0; background: rgba(17,24,39,0.45); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity .22s ease; z-index: 10; display: none; }
+  .overlay-bg.active { display: block; opacity: 1; pointer-events: auto; }
+  .overlay-card { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -40%) scale(.9); width: 340px; height: 620px; background: #fef3c7; border: 4px solid #111827; border-radius: 24px; box-shadow: 12px 12px 0 #111827; padding: 20px; opacity: 0; overflow-y: auto; transition: transform .26s cubic-bezier(.2,.8,.2,1), opacity .2s ease; z-index: 20; display: none; }
+  .overlay-card.active { display: block; transform: translate(-50%, -50%) scale(1); opacity: 1; }
+
+  .scroll-locked { overflow: hidden !important; }
 </style>
 </head>
 <body>
-  <div class="view-container" id="view">
-    <div id="placeholder1" class="placeholder"><div class="plus" onclick="openPopup(1)">+</div></div>
-    <div id="placeholder2" class="placeholder"><div class="plus" onclick="openPopup(2)">+</div></div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen" id="screen">
+      <div class="header"><h2>NeoBrutal Finance</h2><span>▲ 9.8%</span></div>
+      <div class="divider"></div>
+
+      <div class="widgets" id="widgets">
+        <div class="card" data-title="Total Balance" data-summary="Steady monthly growth driven by tech and energy sectors.">
+          <div class="handle" aria-label="Drag to reorder" role="button" tabindex="0"><div class="dot-vert"></div><div class="dot-vert"></div><div class="dot-vert"></div></div>
+          <button class="expand-btn" type="button"><div class="dot-horz"></div><div class="dot-horz"></div><div class="dot-horz"></div></button>
+          <div>Total Balance</div><div class="value">$128,450</div>
+          <svg viewBox="0 0 300 140" fill="none" stroke="#111827" stroke-width="3"><path d="M0,100 C60,70 120,110 180,80 240,50 300,100 300,100" /></svg>
+        </div>
+
+        <div class="card" data-title="Performance (30d)" data-summary="Equities up 5%, bonds slightly down, stable risk profile.">
+          <div class="handle" aria-label="Drag to reorder" role="button" tabindex="0"><div class="dot-vert"></div><div class="dot-vert"></div><div class="dot-vert"></div></div>
+          <button class="expand-btn" type="button"><div class="dot-horz"></div><div class="dot-horz"></div><div class="dot-horz"></div></button>
+          <div>Performance (30d)</div>
+          <svg viewBox="0 0 300 140"><rect x="10" y="90" width="20" height="50" fill="#111827"/><rect x="40" y="70" width="20" height="70" fill="#111827"/><rect x="70" y="110" width="20" height="30" fill="#ef4444"/><rect x="100" y="60" width="20" height="80" fill="#111827"/><rect x="130" y="85" width="20" height="55" fill="#111827"/><rect x="160" y="40" width="20" height="100" fill="#111827"/></svg>
+        </div>
+
+        <div class="card" data-title="Market News" data-summary="Fed speech boosts tech; oil declines; earnings strong.">
+          <div class="handle" aria-label="Drag to reorder" role="button" tabindex="0"><div class="dot-vert"></div><div class="dot-vert"></div><div class="dot-vert"></div></div>
+          <button class="expand-btn" type="button"><div class="dot-horz"></div><div class="dot-horz"></div><div class="dot-horz"></div></button>
+          <div class="news-item"><div class="thumb"></div><div class="news-text"><strong>Markets Rally After Fed Speech</strong><span>Dow +1.2% | 20m ago</span></div></div>
+          <div class="news-item"><div class="thumb"></div><div class="news-text"><strong>Oil Prices Fall Again</strong><span>Energy sector slides 3%</span></div></div>
+        </div>
+      </div>
+
+      <div class="overlay-bg" id="overlay"></div>
+      <div class="overlay-card" id="overlayCard"></div>
+    </div>
   </div>
 
-  <div id="popup" class="popup">
-    <input type="text" id="promptInput" placeholder="Type 'news' or 'chart'">
-    <button onclick="handleGo()">Go</button>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script>
-    let currentPlaceholder = null;
+    const screen = document.getElementById('screen');
+    const widgets = document.getElementById('widgets');
+    const overlay = document.getElementById('overlay');
+    const overlayCard = document.getElementById('overlayCard');
 
-    function openPopup(num) {
-      currentPlaceholder = num;
-      document.getElementById('popup').style.display = 'flex';
-      document.getElementById('promptInput').value = '';
+    // --- Robust Sortable config (vertical list, handle-only, touch friendly) ---
+    const sortable = new Sortable(widgets, {
+      animation: 200,
+      easing: 'cubic-bezier(.2,.8,.2,1)',
+      direction: 'vertical',
+      handle: '.handle',
+      ghostClass: 'drag-ghost',
+      chosenClass: 'chosen',
+      dragClass: 'dragging',
+      forceFallback: true,          // consistent on iOS
+      fallbackOnBody: true,
+      fallbackTolerance: 3,
+      delayOnTouchOnly: true,
+      delay: 0,
+      filter: '.expand-btn, .expand-btn *', // clicks on expand never start drag
+      preventOnFilter: true,
+    });
+
+    // --- Expansions: attach listeners to ALL current & future widgets via delegation ---
+    widgets.addEventListener('click', (e) => {
+      const expand = e.target.closest('.expand-btn');
+      if (!expand || !widgets.contains(expand)) return;
+      e.stopPropagation();
+      e.preventDefault();
+      const card = expand.closest('.card');
+      openOverlay(card);
+    });
+
+    overlay.addEventListener('click', closeOverlay);
+
+    function lockScroll(lock){
+      if (lock) screen.classList.add('scroll-locked'); else screen.classList.remove('scroll-locked');
     }
 
-    function closePopup() {
-      document.getElementById('popup').style.display = 'none';
+    function openOverlay(card){
+      const title = card.dataset.title || '';
+      const summary = card.dataset.summary || '';
+      const svg = card.querySelector('svg') ? card.querySelector('svg').outerHTML : '';
+      overlayCard.innerHTML = `
+        <button class="expand-btn" id="overlayClose" type="button" style="position: sticky; top: 8px; float: right;">
+          <div class="dot-horz"></div><div class="dot-horz"></div><div class="dot-horz"></div>
+        </button>
+        <h3 style="margin:8px 0 10px 0;">${title}</h3>
+        ${svg}
+        <p style="margin-top:10px;font-size:14px;">${summary}</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor eget massa viverra convallis. Integer ac lacinia nisl. Nulla facilisi. Cras imperdiet nunc a nibh tristique, vitae tempus magna consequat. Morbi id gravida nibh. Aliquam erat volutpat. Curabitur euismod, nisl a fermentum venenatis, ex dui pretium justo, nec congue arcu lorem ac purus.</p>
+        <p>Vivamus vulputate viverra sapien, ac feugiat magna congue vitae. Fusce porttitor semper enim. Praesent at odio eget libero auctor hendrerit. Sed ultricies, leo id interdum porttitor, ipsum lorem eleifend neque, at iaculis purus nisl id erat. Donec pretium nibh eget erat tincidunt, sed congue elit aliquam. Integer lacinia nibh in felis hendrerit, ut lacinia lacus cursus.</p>
+        <p>In hac habitasse platea dictumst. Morbi gravida nibh nec nibh elementum ultrices. Curabitur aliquet, lacus et iaculis gravida, nunc neque aliquet elit, quis luctus nisl lectus ut ligula. Proin at velit vitae lectus consequat auctor. Sed sed nibh in quam tempus venenatis. Etiam id aliquam nibh. Donec rutrum, dui ut vulputate ultricies, augue lorem gravida lorem, sed varius justo purus sed lorem.</p>
+        <p>Maecenas vel ligula gravida, interdum libero id, volutpat lacus. Integer nec arcu fermentum, rhoncus nibh ac, tincidunt nibh. Suspendisse potenti. Curabitur semper arcu non eros pellentesque, at vulputate justo convallis. Aenean a lorem sed lorem accumsan volutpat a vitae est. Integer id placerat tellus.</p>
+        <p>Aenean consequat, arcu quis sollicitudin blandit, diam felis eleifend ipsum, eget dignissim diam arcu sed massa. Pellentesque sed dignissim mauris. Aliquam accumsan nunc eget eros lacinia, a tincidunt mauris pretium.</p>
+      `;
+      overlay.classList.add('active');
+      overlayCard.classList.add('active');
+      lockScroll(true);
+      document.getElementById('overlayClose').addEventListener('click', (ev)=>{ ev.stopPropagation(); closeOverlay(); });
     }
 
-    function handleGo() {
-      const input = document.getElementById('promptInput').value.trim().toLowerCase();
-      const placeholder = document.getElementById('placeholder' + currentPlaceholder);
-      placeholder.innerHTML = '';
-
-      if (input === 'news') {
-        createNewsWidget(placeholder);
-      } else if (input === 'chart') {
-        createChartWidget(placeholder);
-      } else {
-        placeholder.innerHTML = '<div class="plus" onclick="openPopup(' + currentPlaceholder + ')">+</div>';
-        alert('Type "news" or "chart"');
-      }
-      closePopup();
-    }
-
-    function createControls(container, type) {
-      const close = document.createElement('div');
-      close.className = 'close-btn';
-      close.innerHTML = '&times;';
-      close.onclick = () => {
-        // If expanded, first collapse to avoid stale state
-        if (container.classList.contains('expanded-overlay-card')) {
-          toggleExpand(container, type, true);
-        }
-        // Safely destroy chart instance if exists
-        const canvas = container.querySelector('canvas');
-        if (canvas) {
-          const inst = Chart.getChart(canvas);
-          if (inst) inst.destroy();
-        }
-        container.className = 'placeholder';
-        container.innerHTML = '<div class="plus" onclick="openPopup(' + container.id.replace('placeholder','') + ')">+</div>';
-      };
-
-      const expand = document.createElement('div');
-      expand.className = 'expand-btn';
-      expand.innerHTML = '&#8942;';
-      expand.onclick = () => toggleExpand(container, type);
-
-      container.appendChild(close);
-      container.appendChild(expand);
-    }
-
-    function toggleExpand(container, type, forceCollapse = false) {
-      const willExpand = forceCollapse ? false : !container.classList.contains('expanded-overlay-card');
-
-      if (willExpand) {
-        // Move this widget to overlay bounds (covering both placeholders)
-        container.classList.add('expanded-overlay-card');
-        // Ensure summary exists and is visible
-        let summary = container.querySelector('.summary');
-        if (!summary) {
-          summary = document.createElement('div');
-          summary.className = 'summary';
-          summary.innerText = type === 'chart'
-            ? 'This chart shows simulated AAPL price trends. Market tone looks constructive; pullbacks remain shallow.'
-            : 'Apple\'s ecosystem narrative stays intact as services and devices reinforce each other; optimism persists.';
-          container.querySelector('.widget-inner').appendChild(summary);
-        } else {
-          summary.style.display = 'block';
-        }
-        if (type === 'chart') recolorChart(container.querySelector('canvas'));
-      } else {
-        // Collapse back into its slot
-        container.classList.remove('expanded-overlay-card');
-        const summary = container.querySelector('.summary');
-        if (summary) summary.style.display = 'none';
-        if (type === 'chart') recolorChart(container.querySelector('canvas'), true);
-      }
-    }
-
-    function recolorChart(canvas, revert = false) {
-      if (!canvas) return;
-      const chart = Chart.getChart(canvas);
-      if (chart) {
-        chart.data.datasets[0].borderColor = revert ? '#4a4a9e' : 'rgba(255, 99, 132, 0.95)';
-        chart.data.datasets[0].backgroundColor = revert ? 'rgba(74, 74, 158, 0.1)' : 'rgba(255, 99, 132, 0.25)';
-        chart.data.datasets[0].pointBackgroundColor = revert ? '#4a4a9e' : 'rgba(255, 99, 132, 0.95)';
-        chart.update();
-      }
-    }
-
-    function createNewsWidget(container) {
-      container.classList.add('widget');
-      container.innerHTML = '';
-      createControls(container, 'news');
-
-      const inner = document.createElement('div');
-      inner.className = 'widget-inner';
-
-      const visual = document.createElement('div');
-      visual.className = 'visual-area';
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'news-container';
-
-      const newsData = [
-        { title: 'Apple unveils new AR headset', snippet: 'The innovative AR device blends digital elements with the physical world, redefining the tech experience.' },
-        { title: 'Analysts raise targets for Apple', snippet: 'Investors remain bullish as Apple diversifies revenue through AI-driven services and ecosystem growth.' }
-      ];
-      newsData.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'news-item';
-        div.innerHTML = `<div class='news-title'>${item.title}</div><div class='news-snippet'>${item.snippet}</div>`;
-        wrapper.appendChild(div);
-      });
-
-      visual.appendChild(wrapper);
-      inner.appendChild(visual);
-      // Summary is added on expand
-      container.appendChild(inner);
-    }
-
-    function createChartWidget(container) {
-      container.classList.add('widget');
-      container.innerHTML = '';
-      createControls(container, 'chart');
-
-      const inner = document.createElement('div');
-      inner.className = 'widget-inner';
-
-      const visual = document.createElement('div');
-      visual.className = 'visual-area';
-
-      const canvas = document.createElement('canvas');
-      visual.appendChild(canvas);
-      inner.appendChild(visual);
-      container.appendChild(inner);
-
-      const ctx = canvas.getContext('2d');
-      const data = Array.from({length: 30}, () => 170 + Math.random() * 10);
-      const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: Array.from({length: 30}, (_, i) => 'Day ' + (i+1)),
-          datasets: [{
-            label: 'AAPL Stock Price',
-            data: data,
-            borderColor: '#4a4a9e',
-            backgroundColor: 'rgba(74, 74, 158, 0.1)',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true,
-            pointRadius: 2,
-            pointBackgroundColor: '#4a4a9e'
-          }]
-        },
-        options: {
-          plugins: {
-            legend: { display: false },
-            title: {
-              display: true,
-              text: 'Apple Inc. (AAPL) — Simulated Price Trend',
-              color: '#333',
-              font: { size: 16, weight: 'bold' }
-            },
-            tooltip: { enabled: true }
-          },
-          interaction: { mode: 'index', intersect: false },
-          scales: {
-            x: { display: false },
-            y: { display: false }
-          }
-        }
-      });
-      // Attach instance to canvas for safe retrieval
-      canvas._chart = chart;
+    function closeOverlay(){
+      overlay.classList.remove('active');
+      overlayCard.classList.remove('active');
+      lockScroll(false);
     }
   </script>
 </body>

@@ -29,6 +29,9 @@
     }
   },
   "include": [
-    "src"
+    "src",
+    "App.tsx",
+    "index.js",
+    "env.d.ts"
   ]
 }
