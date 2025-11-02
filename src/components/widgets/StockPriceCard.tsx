@@ -19,9 +19,9 @@
  * 
  * Note: Data is currently simulated for demonstration purposes.
  */
-import React, { useMemo } from 'react';
-import { Text, StyleSheet, View } from 'react-native';
-import Svg, { Path, Line } from 'react-native-svg';
+import React, { useMemo, useState } from 'react';
+import { Text, StyleSheet, View, Pressable, Modal, Dimensions } from 'react-native';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { NeoCard } from '../base/NeoCard';
 import { colors } from '../../theme/colors';
 import { WidgetProps } from './widgetRegistry';
@@ -46,6 +46,10 @@ export const StockPriceCard: React.FC<WidgetProps> = ({
   onExpand, 
   expanded = false,
 }) => {
+  // State for P/E Ratio popup
+  const [showPePopup, setShowPePopup] = useState(false);
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+
   // Generate stable price data using useMemo
   const priceData = useMemo(() => generatePriceData(), []);
   const currentPrice = priceData[priceData.length - 1];
@@ -53,6 +57,47 @@ export const StockPriceCard: React.FC<WidgetProps> = ({
   const priceChange = currentPrice - previousPrice;
   const priceChangePercent = ((priceChange / previousPrice) * 100).toFixed(2);
   const isPositive = priceChange >= 0;
+
+  // Generate P/E ratio data for last 4 quarters
+  const peRatioData = useMemo(() => {
+    return [26.8, 27.2, 28.1, 28.45]; // Q1, Q2, Q3, Q4 (current)
+  }, []);
+
+  // Handle P/E Ratio box press
+  const handlePeRatioPressIn = (event: any) => {
+    const { pageX, pageY } = event.nativeEvent;
+    const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+    const popupWidth = 180;
+    const popupHeight = 140;
+    
+    const x = Math.max(10, Math.min(pageX - popupWidth / 2, screenWidth - popupWidth - 10));
+    const y = Math.max(10, pageY - popupHeight - 80);
+    
+    setPopupPosition({ x, y });
+    setShowPePopup(true);
+  };
+
+  const handlePeRatioPressOut = () => {
+    setShowPePopup(false);
+  };
+
+  // Generate P/E ratio chart path
+  const generatePeRatioChartPath = () => {
+    const width = 160;
+    const height = 80;
+    const padding = 10;
+    const max = Math.max(...peRatioData);
+    const min = Math.min(...peRatioData);
+    const range = max - min || 1; // Avoid division by zero
+    
+    const points = peRatioData.map((value, index) => {
+      const x = padding + (index / (peRatioData.length - 1)) * (width - padding * 2);
+      const y = height - padding - ((value - min) / range) * (height - padding * 2);
+      return `${x},${y}`;
+    });
+    
+    return `M ${points.join(' L ')}`;
+  };
   
   // Convert price data to SVG path
   const generatePath = () => {
@@ -73,6 +118,7 @@ export const StockPriceCard: React.FC<WidgetProps> = ({
   };
 
   return (
+    <>
     <NeoCard 
       title="AAPL - Apple Inc." 
       onExpand={onExpand}
@@ -101,10 +147,14 @@ export const StockPriceCard: React.FC<WidgetProps> = ({
           <Text style={styles.sectionTitle}>Financial Ratios</Text>
           
           <View style={styles.ratiosGrid}>
-            <View style={styles.ratioItem}>
+            <Pressable
+              style={styles.ratioItem}
+              onPressIn={handlePeRatioPressIn}
+              onPressOut={handlePeRatioPressOut}
+            >
               <Text style={styles.ratioLabel}>P/E Ratio</Text>
               <Text style={styles.ratioValue}>28.45</Text>
-            </View>
+            </Pressable>
             <View style={styles.ratioItem}>
               <Text style={styles.ratioLabel}>Market Cap</Text>
               <Text style={styles.ratioValue}>$2.89T</Text>
@@ -142,7 +192,68 @@ export const StockPriceCard: React.FC<WidgetProps> = ({
           </Text>
         </View>
       )}
+
     </NeoCard>
+    
+    {/* P/E Ratio Popup Modal */}
+    <Modal
+      visible={showPePopup}
+      transparent={true}
+      animationType="none"
+      onRequestClose={() => setShowPePopup(false)}
+    >
+      <View style={styles.modalContainer} pointerEvents="box-none">
+        <View
+          style={[
+            styles.pePopup,
+            {
+              left: popupPosition.x,
+              top: popupPosition.y,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Text style={styles.popupTitle}>P/E Ratio (Last 4 Quarters)</Text>
+          <Svg viewBox="0 0 160 80" style={styles.popupChart}>
+            <Path
+              d={generatePeRatioChartPath()}
+              stroke={colors.ink}
+              strokeWidth={2}
+              fill="none"
+            />
+            {/* Add dots at data points */}
+            {peRatioData.map((value, index) => {
+              const width = 160;
+              const height = 80;
+              const padding = 10;
+              const max = Math.max(...peRatioData);
+              const min = Math.min(...peRatioData);
+              const range = max - min || 1;
+              const x = padding + (index / (peRatioData.length - 1)) * (width - padding * 2);
+              const y = height - padding - ((value - min) / range) * (height - padding * 2);
+              return (
+                <Rect
+                  key={index}
+                  x={x - 3}
+                  y={y - 3}
+                  width={6}
+                  height={6}
+                  fill={colors.ink}
+                />
+              );
+            })}
+          </Svg>
+          <View style={styles.popupLabels}>
+            {peRatioData.map((value, index) => (
+              <Text key={index} style={styles.popupLabel}>
+                Q{index + 1}: {value.toFixed(1)}
+              </Text>
+            ))}
+          </View>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 };
 
@@ -222,6 +333,48 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 12,
     fontSize: 14,
+  },
+  pePopup: {
+    position: 'absolute',
+    width: 180,
+    backgroundColor: colors.cardBg,
+    borderWidth: 3,
+    borderColor: colors.ink,
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.4,
+    shadowRadius: 0,
+    shadowOffset: { width: 6, height: 6 },
+    zIndex: 1000,
+  },
+  popupTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.ink,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  popupChart: {
+    height: 80,
+    width: '100%',
+    marginBottom: 8,
+  },
+  popupLabels: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    justifyContent: 'center',
+  },
+  popupLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.ink,
+    opacity: 0.8,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
 });
 
