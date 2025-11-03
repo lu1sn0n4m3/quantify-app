@@ -134,9 +134,9 @@ export default function WidgetScreen() {
             <WidgetComponent
               key={widget.id}
               id={widget.id}
+              data={widget.data}
               onExpand={() => handleExpand(widget.id)}
               expanded={false}
-              {...(widget.props || {})}
             />
           );
         })}
@@ -174,9 +174,9 @@ export default function WidgetScreen() {
                   {displayWidget && (
                     <displayWidget.component
                       id={displayWidget.id}
+                      data={displayWidget.data}
                       onExpand={() => handleExpand(displayWidget.id)}
                       expanded={true}
-                      {...(displayWidget.props || {})}
                     />
                   )}
                 </ScrollView>

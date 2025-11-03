@@ -14,12 +14,13 @@
  * 2. Add it to the registry object with its string identifier
  */
 
+import React from 'react';
 import { TotalBalanceCard } from './TotalBalanceCard';
 import { PortfolioCard } from './PortfolioCard';
 import { StockPriceCard } from './StockPriceCard';
 import type { WidgetProps } from './widgetRegistry';
 
-type WidgetComponent = React.ComponentType<WidgetProps>;
+type WidgetComponent = React.ComponentType<WidgetProps<any>>;
 
 export const widgetComponentRegistry: Record<string, WidgetComponent> = {
   TotalBalanceCard,

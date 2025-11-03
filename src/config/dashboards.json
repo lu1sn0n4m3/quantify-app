@@ -8,17 +8,58 @@
         {
           "id": "stock-aapl",
           "type": "StockPriceCard",
-          "props": {}
+          "data": {
+            "ticker": "AAPL",
+            "name": "Apple Inc.",
+            "prices": {
+              "2024-01-01": 145.50,
+              "2024-01-02": 146.20,
+              "2024-01-03": 147.80,
+              "2024-01-04": 146.50,
+              "2024-01-05": 148.20,
+              "2024-01-06": 149.10,
+              "2024-01-07": 148.75,
+              "2024-01-08": 150.20,
+              "2024-01-09": 151.30,
+              "2024-01-10": 150.90,
+              "2024-01-11": 152.40,
+              "2024-01-12": 153.10,
+              "2024-01-13": 152.80,
+              "2024-01-14": 154.20,
+              "2024-01-15": 155.50,
+              "2024-01-16": 156.10,
+              "2024-01-17": 155.80,
+              "2024-01-18": 157.20,
+              "2024-01-19": 158.40,
+              "2024-01-20": 159.10
+            },
+            "financial_ratios": {
+              "P/E Ratio": 28.45,
+              "Market Cap": "$2.89T",
+              "Dividend Yield": "0.52%",
+              "52 Week High": "$198.23",
+              "52 Week Low": "$124.17",
+              "Volume": "58.3M"
+            },
+            "summary": "Apple continues to show strong performance in the tech sector, with solid fundamentals and consistent revenue growth. The stock is trading near its historical average P/E ratio, suggesting fair valuation. Recent product launches and expanding services revenue provide positive momentum for long-term growth. Market sentiment remains bullish with strong institutional support."
+          }
         },
         {
           "id": "balance-1",
           "type": "TotalBalanceCard",
-          "props": {}
+          "data": {
+            "balance": 128450,
+            "summary": "Steady monthly growth driven by tech and energy sectors."
+          }
         },
         {
           "id": "portfolio-1",
           "type": "PortfolioCard",
-          "props": {}
+          "data": {
+            "value": 45200,
+            "gain": 12.5,
+            "summary": "Your portfolio has shown strong performance this quarter."
+          }
         }
       ]
     },
@@ -30,17 +71,88 @@
         {
           "id": "stock-tsla",
           "type": "StockPriceCard",
-          "props": {}
+          "data": {
+            "ticker": "TSLA",
+            "name": "Tesla, Inc.",
+            "prices": {
+              "2024-01-01": 240.50,
+              "2024-01-02": 245.20,
+              "2024-01-03": 248.80,
+              "2024-01-04": 242.50,
+              "2024-01-05": 250.20,
+              "2024-01-06": 252.10,
+              "2024-01-07": 248.75,
+              "2024-01-08": 255.20,
+              "2024-01-09": 258.30,
+              "2024-01-10": 256.90,
+              "2024-01-11": 260.40,
+              "2024-01-12": 262.10,
+              "2024-01-13": 258.80,
+              "2024-01-14": 265.20,
+              "2024-01-15": 268.50,
+              "2024-01-16": 270.10,
+              "2024-01-17": 268.80,
+              "2024-01-18": 272.20,
+              "2024-01-19": 275.40,
+              "2024-01-20": 278.10
+            },
+            "financial_ratios": {
+              "P/E Ratio": 45.2,
+              "Market Cap": "$850B",
+              "Dividend Yield": "0%",
+              "52 Week High": "$299.29",
+              "52 Week Low": "$138.80",
+              "Volume": "125.5M"
+            },
+            "summary": "Tesla maintains its position as a leader in electric vehicle innovation, with expanding global production capacity and strong demand for its vehicles. The company's energy storage and solar businesses are showing growth potential. Volatility remains high due to market sentiment around EV adoption and competitive dynamics."
+          }
         },
         {
           "id": "stock-googl",
           "type": "StockPriceCard",
-          "props": {}
+          "data": {
+            "ticker": "GOOGL",
+            "name": "Alphabet Inc.",
+            "prices": {
+              "2024-01-01": 142.50,
+              "2024-01-02": 143.20,
+              "2024-01-03": 144.80,
+              "2024-01-04": 143.50,
+              "2024-01-05": 145.20,
+              "2024-01-06": 146.10,
+              "2024-01-07": 145.75,
+              "2024-01-08": 147.20,
+              "2024-01-09": 148.30,
+              "2024-01-10": 147.90,
+              "2024-01-11": 149.40,
+              "2024-01-12": 150.10,
+              "2024-01-13": 149.80,
+              "2024-01-14": 151.20,
+              "2024-01-15": 152.50,
+              "2024-01-16": 153.10,
+              "2024-01-17": 152.80,
+              "2024-01-18": 154.20,
+              "2024-01-19": 155.40,
+              "2024-01-20": 156.10
+            },
+            "financial_ratios": {
+              "P/E Ratio": 24.8,
+              "Market Cap": "$1.85T",
+              "Dividend Yield": "0%",
+              "52 Week High": "$173.45",
+              "52 Week Low": "$115.23",
+              "Volume": "32.1M"
+            },
+            "summary": "Alphabet continues to dominate the digital advertising space while expanding into cloud services and AI. Strong revenue growth and consistent profitability make it a solid long-term investment. The company's investments in AI and cloud infrastructure position it well for future growth."
+          }
         },
         {
           "id": "balance-2",
           "type": "TotalBalanceCard",
-          "props": {}
+          "data": {
+            "balance": 95000,
+            "summary": "Market conditions show positive momentum across sectors."
+          }
         }
       ]
     }

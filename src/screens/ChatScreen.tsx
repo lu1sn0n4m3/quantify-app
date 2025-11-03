@@ -16,6 +16,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { colors } from '../theme/colors';
+import { typography } from '../theme/typography';
 
 export default function ChatScreen() {
   return (
@@ -39,13 +40,12 @@ const styles = StyleSheet.create({
     minHeight: 400,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
+    ...typography.headingSmall,
     color: colors.ink,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    ...typography.bodyLarge,
     color: colors.ink,
     fontWeight: '600',
   },

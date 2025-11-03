@@ -17,6 +17,7 @@ import React from 'react';
 import { useClerk } from '@clerk/clerk-expo';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
 
 export const SignOutButton = () => {
   // Use `useClerk()` to access the `signOut()` function
@@ -58,9 +59,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 4, height: 4 },
   },
   text: {
-    color: colors.white,
+    ...typography.heading,
     fontSize: 14,
-    fontWeight: '800',
+    color: colors.white,
   },
 });
 

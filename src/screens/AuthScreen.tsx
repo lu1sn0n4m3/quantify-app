@@ -20,6 +20,7 @@ import React from 'react';
 import { View, Text, Pressable, Alert, StyleSheet } from 'react-native';
 import { useOAuth } from '@clerk/clerk-expo';
 import { colors } from '../theme/colors';
+import { typography } from '../theme/typography';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 
 export default function AuthScreen() {
@@ -72,8 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    fontSize: 28,
-    fontWeight: '800',
+    ...typography.headingMedium,
     color: colors.ink,
   },
   divider: {
@@ -87,14 +87,13 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '800',
+    ...typography.headingLarge,
     color: colors.ink,
     marginBottom: 12,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
+    ...typography.change,
     fontWeight: '600',
     color: colors.ink,
     marginBottom: 48,
@@ -115,8 +114,7 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
   },
   buttonText: {
+    ...typography.change,
     color: colors.screenBg,
-    fontSize: 18,
-    fontWeight: '800',
   },
 });

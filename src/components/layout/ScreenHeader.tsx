@@ -18,6 +18,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
 import { NeoSidebarButton } from '../base/NeoSidebarButton';
 import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
 import dashboardsConfig from '../../config/dashboards.json';
 
 type ScreenHeaderProps = {
@@ -63,8 +64,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.screenBg,
   },
   headerTitle: {
+    ...typography.heading,
     fontSize: 20,
-    fontWeight: '800',
     color: colors.ink,
     flex: 1,
     textAlign: 'center',
@@ -89,8 +90,8 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
   },
   closeButtonText: {
+    ...typography.heading,
     fontSize: 20,
-    fontWeight: '800',
     color: colors.ink,
     lineHeight: 20,
   },

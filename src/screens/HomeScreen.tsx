@@ -19,6 +19,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { colors } from '../theme/colors';
+import { typography } from '../theme/typography';
 
 export default function HomeScreen() {
   const { user } = useUser();
@@ -68,8 +69,8 @@ const styles = StyleSheet.create({
     minHeight: 400,
   },
   greeting: {
+    ...typography.change,
     fontSize: 20,
-    fontWeight: '700',
     color: colors.ink,
     marginBottom: 32,
   },
@@ -86,13 +87,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 6, height: 6 },
   },
   comingSoonText: {
-    fontSize: 28,
-    fontWeight: '800',
+    ...typography.headingMedium,
     color: colors.ink,
     marginBottom: 12,
   },
   comingSoonSubtext: {
-    fontSize: 16,
+    ...typography.bodyLarge,
     fontWeight: '600',
     color: colors.ink,
     opacity: 0.7,

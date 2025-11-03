@@ -2,262 +2,467 @@
  * StockPriceCard Widget
  * 
  * A finance widget that displays stock price information with a price chart.
- * Shows simulated stock data with price movement visualization. In expanded view,
- * displays detailed financial ratios and analysis summary.
  * 
- * Used by: WidgetScreen (via widgetRegistry)
+ * NEW ARCHITECTURE:
+ * - Widget defines its payload type (StockPriceCardPayload)
+ * - Widget generates title from payload (ticker + name)
+ * - Widget defines pages for condensed view
+ * - Widget defines expanded view (completely separate layout)
+ * - NeoCard handles all pagination, page indicator, and expand button
  * 
- * SMALL VERSION (expanded = false):
- * - Stock ticker and current price
- * - Price change percentage
- * - Mini price chart
+ * PAYLOAD STRUCTURE:
+ * {
+ *   ticker: string,           // e.g., "AAPL"
+ *   name: string,             // e.g., "Apple Inc."
+ *   prices: {                 // Dict with date keys and price values
+ *     "2024-01-01": 145.50,
+ *     "2024-01-02": 146.20,
+ *     ...
+ *   },
+ *   financial_ratios: {       // Dict with ratio names and values
+ *     "P/E Ratio": 28.45,
+ *     "Market Cap": "$2.89T",
+ *     ...
+ *   },
+ *   summary: string           // Text summarizing the data
+ * }
  * 
- * EXPANDED VERSION (expanded = true):
- * - Same as small version PLUS:
- * - Financial ratios (P/E, Market Cap, etc.)
- * - Detailed summary analysis
+ * CONDENSED VIEW PAGES:
+ * - Page 1: Current price, price change, price chart
+ * - Page 2: Financial ratios grid
+ * - Page 3: Analysis summary text
  * 
- * Note: Data is currently simulated for demonstration purposes.
+ * EXPANDED VIEW:
+ * - All content in vertical scroll
+ * - Can have richer charts, more detailed visualizations
+ * - Completely separate layout from condensed view
  */
-import React, { useMemo, useState } from 'react';
-import { Text, StyleSheet, View, Pressable, Modal, Dimensions } from 'react-native';
-import Svg, { Path, Rect } from 'react-native-svg';
+import React from 'react';
+import { Text, StyleSheet, View } from 'react-native';
+import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
 import { NeoCard } from '../base/NeoCard';
 import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
 import { WidgetProps } from './widgetRegistry';
 
-// Simulate stock price data
-const generatePriceData = () => {
-  const basePrice = 145.50;
-  const points = 20;
-  let currentPrice = basePrice;
-  const prices = [currentPrice];
-  
-  for (let i = 1; i < points; i++) {
-    const change = (Math.random() - 0.48) * 5; // Slight upward bias
-    currentPrice = Math.max(basePrice * 0.8, Math.min(basePrice * 1.2, currentPrice + change));
-    prices.push(currentPrice);
-  }
-  
-  return prices;
+/**
+ * StockPriceCard Payload Type
+ * Defines the JSON structure expected from the API
+ */
+export type StockPriceCardPayload = {
+  ticker: string;
+  name: string;
+  prices: Record<string, number>; // Date -> Price mapping
+  financial_ratios: Record<string, string | number>; // Ratio name -> Value mapping
+  summary: string;
 };
 
-export const StockPriceCard: React.FC<WidgetProps> = ({ 
-  onExpand, 
-  expanded = false,
-}) => {
-  // State for P/E Ratio popup
-  const [showPePopup, setShowPePopup] = useState(false);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+/**
+ * Generate title from payload (e.g., "AAPL - Apple Inc.")
+ */
+const getTitle = (data: StockPriceCardPayload): string => {
+  return `${data.ticker} - ${data.name}`;
+};
 
-  // Generate stable price data using useMemo
-  const priceData = useMemo(() => generatePriceData(), []);
-  const currentPrice = priceData[priceData.length - 1];
-  const previousPrice = priceData[0];
-  const priceChange = currentPrice - previousPrice;
-  const priceChangePercent = ((priceChange / previousPrice) * 100).toFixed(2);
-  const isPositive = priceChange >= 0;
+/**
+ * Convert prices dict to array for charting
+ * Returns array of prices sorted by date
+ */
+const getPriceArray = (prices: Record<string, number>): number[] => {
+  const sortedDates = Object.keys(prices).sort();
+  return sortedDates.map(date => prices[date]);
+};
 
-  // Generate P/E ratio data for last 4 quarters
-  const peRatioData = useMemo(() => {
-    return [26.8, 27.2, 28.1, 28.45]; // Q1, Q2, Q3, Q4 (current)
-  }, []);
-
-  // Handle P/E Ratio box press
-  const handlePeRatioPressIn = (event: any) => {
-    const { pageX, pageY } = event.nativeEvent;
-    const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-    const popupWidth = 180;
-    const popupHeight = 140;
-    
-    const x = Math.max(10, Math.min(pageX - popupWidth / 2, screenWidth - popupWidth - 10));
-    const y = Math.max(10, pageY - popupHeight - 80);
-    
-    setPopupPosition({ x, y });
-    setShowPePopup(true);
+/**
+ * Calculate price change from prices dict
+ */
+const getPriceChange = (prices: Record<string, number>): { 
+  current: number; 
+  previous: number; 
+  change: number; 
+  changePercent: string;
+  isPositive: boolean;
+} => {
+  const priceArray = getPriceArray(prices);
+  if (priceArray.length === 0) {
+    return { current: 0, previous: 0, change: 0, changePercent: '0.00', isPositive: true };
+  }
+  const current = priceArray[priceArray.length - 1];
+  const previous = priceArray[0];
+  const change = current - previous;
+  const changePercent = ((change / previous) * 100).toFixed(2);
+  return {
+    current,
+    previous,
+    change,
+    changePercent,
+    isPositive: change >= 0,
   };
+};
 
-  const handlePeRatioPressOut = () => {
-    setShowPePopup(false);
-  };
-
-  // Generate P/E ratio chart path
-  const generatePeRatioChartPath = () => {
-    const width = 160;
-    const height = 80;
-    const padding = 10;
-    const max = Math.max(...peRatioData);
-    const min = Math.min(...peRatioData);
-    const range = max - min || 1; // Avoid division by zero
-    
-    const points = peRatioData.map((value, index) => {
-      const x = padding + (index / (peRatioData.length - 1)) * (width - padding * 2);
-      const y = height - padding - ((value - min) / range) * (height - padding * 2);
-      return `${x},${y}`;
-    });
-    
-    return `M ${points.join(' L ')}`;
-  };
+/**
+ * Generate SVG path for price chart (condensed view)
+ */
+const generatePriceChartPath = (prices: Record<string, number>): string => {
+  const priceArray = getPriceArray(prices);
+  if (priceArray.length < 2) return '';
   
-  // Convert price data to SVG path
-  const generatePath = () => {
-    const width = 300;
-    const height = 120;
-    const padding = 10;
-    const max = Math.max(...priceData);
-    const min = Math.min(...priceData);
-    const range = max - min;
-    
-    const points = priceData.map((price, index) => {
-      const x = (index / (priceData.length - 1)) * width;
-      const y = height - padding - ((price - min) / range) * (height - padding * 2);
-      return `${x},${y}`;
-    });
-    
-    return `M ${points.join(' L ')}`;
-  };
+  const width = 300;
+  const height = 120;
+  const padding = 10;
+  const max = Math.max(...priceArray);
+  const min = Math.min(...priceArray);
+  const range = max - min || 1;
+  
+  const points = priceArray.map((price, index) => {
+    const x = (index / (priceArray.length - 1)) * width;
+    const y = height - padding - ((price - min) / range) * (height - padding * 2);
+    return `${x},${y}`;
+  });
+  
+  return `M ${points.join(' L ')}`;
+};
 
+/**
+ * Generate detailed price chart for expanded view with grid lines and labels
+ * Uses percentage-based coordinates that scale to container size
+ */
+const generateDetailedPriceChart = (
+  prices: Record<string, number>
+): { path: string; gridLines: Array<{ x1: number; y1: number; x2: number; y2: number }>; labels: Array<{ x: number; y: number; text: string }>; width: number; height: number } => {
+  const priceArray = getPriceArray(prices);
+  const sortedDates = Object.keys(prices).sort();
+  
+  if (priceArray.length < 2) {
+    return { path: '', gridLines: [], labels: [], width: 0, height: 0 };
+  }
+  
+  // Use percentage-based coordinates (0-100) that will scale with container
+  const width = 100;
+  const height = 100;
+  const paddingLeft = 12; // percentage
+  const paddingRight = 5;
+  const paddingTop = 8;
+  const paddingBottom = 15;
+  const chartWidth = width - paddingLeft - paddingRight;
+  const chartHeight = height - paddingTop - paddingBottom;
+  
+  const max = Math.max(...priceArray);
+  const min = Math.min(...priceArray);
+  const range = max - min || 1;
+  
+  // Generate price path using percentage coordinates
+  const points = priceArray.map((price, index) => {
+    const x = paddingLeft + (index / (priceArray.length - 1)) * chartWidth;
+    const y = paddingTop + chartHeight - ((price - min) / range) * chartHeight;
+    return `${x},${y}`;
+  });
+  const path = `M ${points.join(' L ')}`;
+  
+  // Generate grid lines (horizontal lines for price levels)
+  const gridLines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  const numGridLines = 5;
+  for (let i = 0; i <= numGridLines; i++) {
+    const value = min + (range / numGridLines) * i;
+    const y = paddingTop + chartHeight - ((value - min) / range) * chartHeight;
+    gridLines.push({
+      x1: paddingLeft,
+      y1: y,
+      x2: paddingLeft + chartWidth,
+      y2: y,
+    });
+  }
+  
+  // Generate labels for Y-axis (price values)
+  const labels: Array<{ x: number; y: number; text: string }> = [];
+  for (let i = 0; i <= numGridLines; i++) {
+    const value = min + (range / numGridLines) * i;
+    const y = paddingTop + chartHeight - ((value - min) / range) * chartHeight;
+    labels.push({
+      x: paddingLeft - 2,
+      y: y + 1,
+      text: `$${value.toFixed(2)}`,
+    });
+  }
+  
+  // Add date labels for X-axis (show first, middle, last)
+  if (sortedDates.length > 0) {
+    const dateIndices = [0, Math.floor(sortedDates.length / 2), sortedDates.length - 1];
+    dateIndices.forEach((idx) => {
+      const x = paddingLeft + (idx / (priceArray.length - 1)) * chartWidth;
+      const date = new Date(sortedDates[idx]);
+      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+      labels.push({
+        x: x,
+        y: height - paddingBottom + 5,
+        text: dateStr,
+      });
+    });
+  }
+  
+  return { path, gridLines, labels, width: 100, height: 100 };
+};
+
+
+/**
+ * Render Page 1: Price Chart
+ */
+const renderPricePage = (data: StockPriceCardPayload): React.ReactElement => {
+  const priceInfo = getPriceChange(data.prices);
+  const chartPath = generatePriceChartPath(data.prices);
+  
   return (
-    <>
-    <NeoCard 
-      title="AAPL - Apple Inc." 
-      onExpand={onExpand}
-    >
-      {/* Current Price */}
+    <View style={styles.pageInner}>
       <View style={styles.priceContainer}>
-        <Text style={styles.price}>${currentPrice.toFixed(2)}</Text>
-        <Text style={[styles.change, isPositive ? styles.positive : styles.negative]}>
-          {isPositive ? '+' : ''}{priceChangePercent}%
+        <Text style={styles.price}>${priceInfo.current.toFixed(2)}</Text>
+        <Text style={[styles.change, priceInfo.isPositive ? styles.positive : styles.negative]}>
+          {priceInfo.isPositive ? '+' : ''}{priceInfo.changePercent}%
         </Text>
       </View>
+      <View style={styles.chartArea}>
+        <Svg viewBox="0 0 300 120" style={styles.chart}>
+          <Path 
+            d={chartPath} 
+            stroke={priceInfo.isPositive ? '#16a34a' : '#dc2626'} 
+            strokeWidth={3} 
+            fill="none" 
+          />
+        </Svg>
+      </View>
+    </View>
+  );
+};
 
-      {/* Price Chart */}
-      <Svg viewBox="0 0 300 120" style={[styles.chart, expanded && styles.chartExpanded]}>
-        <Path 
-          d={generatePath()} 
-          stroke={isPositive ? '#16a34a' : '#dc2626'} 
-          strokeWidth={3} 
-          fill="none" 
-        />
-      </Svg>
-      
-      {/* Expanded Content */}
-      {expanded && (
-        <View style={styles.expandedContent}>
-          <Text style={styles.sectionTitle}>Financial Ratios</Text>
-          
-          <View style={styles.ratiosGrid}>
-            <Pressable
-              style={styles.ratioItem}
-              onPressIn={handlePeRatioPressIn}
-              onPressOut={handlePeRatioPressOut}
-            >
-              <Text style={styles.ratioLabel}>P/E Ratio</Text>
-              <Text style={styles.ratioValue}>28.45</Text>
-            </Pressable>
-            <View style={styles.ratioItem}>
-              <Text style={styles.ratioLabel}>Market Cap</Text>
-              <Text style={styles.ratioValue}>$2.89T</Text>
-            </View>
-            <View style={styles.ratioItem}>
-              <Text style={styles.ratioLabel}>Dividend Yield</Text>
-              <Text style={styles.ratioValue}>0.52%</Text>
-            </View>
-            <View style={styles.ratioItem}>
-              <Text style={styles.ratioLabel}>52 Week High</Text>
-              <Text style={styles.ratioValue}>$198.23</Text>
-            </View>
-            <View style={styles.ratioItem}>
-              <Text style={styles.ratioLabel}>52 Week Low</Text>
-              <Text style={styles.ratioValue}>$124.17</Text>
-            </View>
-            <View style={styles.ratioItem}>
-              <Text style={styles.ratioLabel}>Volume</Text>
-              <Text style={styles.ratioValue}>58.3M</Text>
-            </View>
+/**
+ * Render Page 2: Financial Ratios
+ */
+const renderRatiosPage = (
+  data: StockPriceCardPayload
+): React.ReactElement => {
+  const ratios = Object.entries(data.financial_ratios);
+  
+  return (
+    <View style={styles.pageInner}>
+      <Text style={styles.sectionTitle}>Financial Ratios</Text>
+      <View style={styles.ratiosGrid}>
+        {ratios.map(([label, value], index) => (
+          <View key={index} style={styles.ratioItem}>
+            <Text style={styles.ratioLabel}>{label}</Text>
+            <Text style={styles.ratioValue}>{String(value)}</Text>
           </View>
+        ))}
+      </View>
+    </View>
+  );
+};
 
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionTitle}>Analysis Summary</Text>
-          <Text style={styles.summaryText}>
-            Apple continues to show strong performance in the tech sector, with solid fundamentals 
-            and consistent revenue growth. The stock is trading near its historical average P/E ratio, 
-            suggesting fair valuation. Recent product launches and expanding services revenue provide 
-            positive momentum for long-term growth.
-          </Text>
-          <Text style={styles.summaryText}>
-            Market sentiment remains bullish with strong institutional support. Consider the company's 
-            innovation pipeline and ecosystem strength as key factors in maintaining competitive advantage.
-          </Text>
+/**
+ * Render Page 3: Analysis Summary
+ */
+const renderSummaryPage = (data: StockPriceCardPayload, isCondensed: boolean = false): React.ReactElement => {
+  return (
+    <View style={styles.pageInner}>
+      <Text style={styles.sectionTitle}>Analysis Summary</Text>
+      {isCondensed ? (
+        <View style={styles.summaryContainerCondensed}>
+          <Text style={styles.summaryText}>{data.summary}</Text>
         </View>
+      ) : (
+        <Text style={styles.summaryText}>{data.summary}</Text>
       )}
+    </View>
+  );
+};
 
-    </NeoCard>
-    
-    {/* P/E Ratio Popup Modal */}
-    <Modal
-      visible={showPePopup}
-      transparent={true}
-      animationType="none"
-      onRequestClose={() => setShowPePopup(false)}
-    >
-      <View style={styles.modalContainer} pointerEvents="box-none">
-        <View
-          style={[
-            styles.pePopup,
-            {
-              left: popupPosition.x,
-              top: popupPosition.y,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Text style={styles.popupTitle}>P/E Ratio (Last 4 Quarters)</Text>
-          <Svg viewBox="0 0 160 80" style={styles.popupChart}>
+/**
+ * Render condensed view pages
+ */
+const renderCondensedPages = (
+  data: StockPriceCardPayload
+): React.ReactElement[] => {
+  return [
+    renderPricePage(data),
+    renderRatiosPage(data),
+    renderSummaryPage(data, true),
+  ];
+};
+
+/**
+ * Render expanded view with detailed price chart
+ */
+const renderExpandedView = (data: StockPriceCardPayload): React.ReactElement => {
+  const priceInfo = getPriceChange(data.prices);
+  const priceArray = getPriceArray(data.prices);
+  const sortedDates = Object.keys(data.prices).sort();
+  const chartData = generateDetailedPriceChart(data.prices);
+  
+  // Calculate additional metrics
+  const highestPrice = Math.max(...priceArray);
+  const lowestPrice = Math.min(...priceArray);
+  const avgPrice = priceArray.reduce((a, b) => a + b, 0) / priceArray.length;
+  const volatility = priceArray.length > 1 
+    ? Math.sqrt(priceArray.reduce((sum, price) => sum + Math.pow(price - avgPrice, 2), 0) / priceArray.length)
+    : 0;
+  
+  return (
+    <View style={styles.expandedContent}>
+      {/* Detailed Price Chart Section */}
+      <View style={styles.expandedSection}>
+        <View style={styles.expandedHeader}>
+          <View>
+            <Text style={styles.expandedPrice}>${priceInfo.current.toFixed(2)}</Text>
+            <Text style={[styles.expandedChange, priceInfo.isPositive ? styles.positive : styles.negative]}>
+              {priceInfo.isPositive ? '+' : ''}{priceInfo.changePercent}% 
+              ({priceInfo.isPositive ? '+' : ''}${priceInfo.change.toFixed(2)})
+            </Text>
+          </View>
+        </View>
+        
+        {/* Detailed Chart with Grid */}
+        <View style={styles.detailedChartContainer}>
+          <Svg viewBox={`0 0 ${chartData.width} ${chartData.height}`} style={styles.detailedChart} preserveAspectRatio="none">
+            {/* Grid lines */}
+            {chartData.gridLines.map((line, index) => (
+              <Path
+                key={`grid-${index}`}
+                d={`M ${line.x1} ${line.y1} L ${line.x2} ${line.y2}`}
+                stroke={colors.ink}
+                strokeWidth="0.3"
+                strokeOpacity="0.2"
+                strokeDasharray="1,1"
+              />
+            ))}
+            
+            {/* Area fill under the line */}
             <Path
-              d={generatePeRatioChartPath()}
-              stroke={colors.ink}
-              strokeWidth={2}
+              d={`${chartData.path} L ${chartData.width - 5} ${chartData.height - 15} L ${12} ${chartData.height - 15} Z`}
+              fill={priceInfo.isPositive ? '#16a34a' : '#dc2626'}
+              fillOpacity="0.1"
+            />
+            
+            {/* Price line */}
+            <Path
+              d={chartData.path}
+              stroke={priceInfo.isPositive ? '#16a34a' : '#dc2626'}
+              strokeWidth="0.8"
               fill="none"
             />
-            {/* Add dots at data points */}
-            {peRatioData.map((value, index) => {
-              const width = 160;
-              const height = 80;
-              const padding = 10;
-              const max = Math.max(...peRatioData);
-              const min = Math.min(...peRatioData);
+            
+            {/* Data point dots */}
+            {priceArray.map((price, index) => {
+              const max = Math.max(...priceArray);
+              const min = Math.min(...priceArray);
               const range = max - min || 1;
-              const x = padding + (index / (peRatioData.length - 1)) * (width - padding * 2);
-              const y = height - padding - ((value - min) / range) * (height - padding * 2);
+              const x = 12 + (index / (priceArray.length - 1)) * (chartData.width - 12 - 5);
+              const y = 8 + (chartData.height - 8 - 15) - ((price - min) / range) * (chartData.height - 8 - 15);
               return (
                 <Rect
                   key={index}
-                  x={x - 3}
-                  y={y - 3}
-                  width={6}
-                  height={6}
-                  fill={colors.ink}
+                  x={x - 0.5}
+                  y={y - 0.5}
+                  width="1"
+                  height="1"
+                  fill={priceInfo.isPositive ? '#16a34a' : '#dc2626'}
                 />
               );
             })}
-          </Svg>
-          <View style={styles.popupLabels}>
-            {peRatioData.map((value, index) => (
-              <Text key={index} style={styles.popupLabel}>
-                Q{index + 1}: {value.toFixed(1)}
-              </Text>
+            
+            {/* Labels */}
+            {chartData.labels.map((label, index) => (
+              <SvgText
+                key={`label-${index}`}
+                x={label.x}
+                y={label.y}
+                fontSize="2.5"
+                fill={colors.ink}
+                fillOpacity="0.7"
+                textAnchor={label.x < 12 ? 'end' : 'middle'}
+              >
+                {label.text}
+              </SvgText>
             ))}
+          </Svg>
+        </View>
+        
+        {/* Additional Metrics */}
+        <View style={styles.metricsGrid}>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricLabel}>High</Text>
+            <Text style={styles.metricValue}>${highestPrice.toFixed(2)}</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricLabel}>Low</Text>
+            <Text style={styles.metricValue}>${lowestPrice.toFixed(2)}</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricLabel}>Average</Text>
+            <Text style={styles.metricValue}>${avgPrice.toFixed(2)}</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricLabel}>Volatility</Text>
+            <Text style={styles.metricValue}>${volatility.toFixed(2)}</Text>
           </View>
         </View>
       </View>
-    </Modal>
+      
+      <View style={styles.divider} />
+      
+      {/* Financial Ratios Section */}
+      <View style={styles.expandedSection}>
+        <Text style={styles.sectionTitle}>Financial Ratios</Text>
+        <View style={styles.expandedRatiosGrid}>
+          {Object.entries(data.financial_ratios).map(([label, value], index) => (
+            <View key={index} style={styles.expandedRatioItem}>
+              <Text style={styles.ratioLabel}>{label}</Text>
+              <Text style={styles.ratioValue}>{String(value)}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+      
+      <View style={styles.divider} />
+      
+      {/* Summary Section */}
+      <View style={styles.expandedSection}>
+        {renderSummaryPage(data, false)}
+      </View>
+    </View>
+  );
+};
+
+/**
+ * StockPriceCard Component
+ */
+export const StockPriceCard: React.FC<WidgetProps<StockPriceCardPayload>> = ({ 
+  data,
+  onExpand, 
+  expanded = false,
+}) => {
+  const title = getTitle(data);
+  const condensedPages = renderCondensedPages(data);
+  const expandedViewContent = renderExpandedView(data);
+
+  return (
+    <>
+      <NeoCard
+        title={title}
+        onExpand={onExpand}
+        expanded={expanded}
+        condensedPages={expanded ? [] : condensedPages}
+        expandedView={expandedViewContent}
+      />
+      
+      {/* P/E Ratio Popup Modal (only in condensed view) */}
+      {/* Note: P/E ratio popup removed - historical P/E data not in payload */}
     </>
   );
 };
 
 const styles = StyleSheet.create({
+  pageInner: {
+    width: '100%',
+    paddingHorizontal: 14,
+  },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -265,13 +470,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   price: { 
-    fontWeight: '800', 
-    fontSize: 28, 
+    ...typography.valueXLarge,
     color: colors.ink,
   },
   change: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...typography.change,
   },
   positive: {
     color: '#16a34a',
@@ -279,20 +482,20 @@ const styles = StyleSheet.create({
   negative: {
     color: '#dc2626',
   },
+  chartArea: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    paddingVertical: 4,
+  },
   chart: { 
     height: 120, 
     width: '100%',
     marginTop: 4,
   },
-  chartExpanded: {
-    marginBottom: 16,
-  },
-  expandedContent: {
-    marginTop: 12,
-  },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    ...typography.heading,
     color: colors.ink,
     marginBottom: 12,
   },
@@ -301,6 +504,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: 16,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    width: '92%',
   },
   ratioItem: {
     width: '47%',
@@ -311,70 +517,102 @@ const styles = StyleSheet.create({
     borderColor: colors.ink,
   },
   ratioLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...typography.label,
     color: colors.ink,
     opacity: 0.7,
     marginBottom: 4,
   },
   ratioValue: {
-    fontSize: 16,
-    fontWeight: '800',
+    ...typography.value,
     color: colors.ink,
+  },
+  summaryContainerCondensed: {
+    alignSelf: 'center',
+    width: '92%',
+    maxHeight: 220,
+  },
+  summaryText: {
+    ...typography.body,
+    color: colors.ink,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  expandedContent: {
+    // Expanded view layout
+  },
+  expandedSection: {
+    width: '100%',
+  },
+  expandedHeader: {
+    marginBottom: 16,
+  },
+  expandedPrice: {
+    ...typography.headingLarge,
+    color: colors.ink,
+    marginBottom: 4,
+  },
+  expandedChange: {
+    ...typography.change,
+  },
+  detailedChartContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginVertical: 16,
+    backgroundColor: colors.screenBg,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.ink,
+  },
+  detailedChart: {
+    width: '100%',
+    aspectRatio: 1.75, // Maintain chart proportions
+    minHeight: 180,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 12,
+  },
+  metricItem: {
+    flex: 1,
+    minWidth: '47%',
+    backgroundColor: colors.screenBg,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.ink,
+  },
+  metricLabel: {
+    ...typography.metricLabel,
+    color: colors.ink,
+    opacity: 0.7,
+    marginBottom: 4,
+  },
+  metricValue: {
+    ...typography.metricValue,
+    color: colors.ink,
+  },
+  expandedRatiosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  expandedRatioItem: {
+    width: '47%',
+    backgroundColor: colors.screenBg,
+    padding: 14,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.ink,
   },
   divider: {
     height: 2,
     backgroundColor: colors.ink,
     marginVertical: 16,
     opacity: 0.3,
-  },
-  summaryText: {
-    color: colors.ink,
-    lineHeight: 20,
-    marginBottom: 12,
-    fontSize: 14,
-  },
-  pePopup: {
-    position: 'absolute',
-    width: 180,
-    backgroundColor: colors.cardBg,
-    borderWidth: 3,
-    borderColor: colors.ink,
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.4,
-    shadowRadius: 0,
-    shadowOffset: { width: 6, height: 6 },
-    zIndex: 1000,
-  },
-  popupTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.ink,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  popupChart: {
-    height: 80,
-    width: '100%',
-    marginBottom: 8,
-  },
-  popupLabels: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    justifyContent: 'center',
-  },
-  popupLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.ink,
-    opacity: 0.8,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'transparent',
+    marginHorizontal: 14,
+    alignSelf: 'stretch',
   },
 });
-

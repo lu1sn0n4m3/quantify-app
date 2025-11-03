@@ -154,13 +154,21 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
             return null;
           }
 
+          // Get data from widget.data
+          const widgetData = (widget as any).data;
+
+          if (!widgetData) {
+            console.warn(`Widget "${widget.id}" is missing data prop`);
+            return null;
+          }
+
           return (
             <WidgetComponent
               key={widget.id}
               id={widget.id}
+              data={widgetData}
               onExpand={() => handleExpand(widget.id)}
               expanded={false}
-              {...(widget.props || {})}
             />
           );
         })}
@@ -195,14 +203,24 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
                 style={styles.expandedScrollView}
                 contentContainerStyle={styles.expandedScrollContent}
               >
-                {displayWidget && DisplayWidgetComponent && (
-                  <DisplayWidgetComponent
-                    id={displayWidget.id}
-                    onExpand={() => handleExpand(displayWidget.id)}
-                    expanded={true}
-                    {...(displayWidget.props || {})}
-                  />
-                )}
+                {displayWidget && DisplayWidgetComponent && (() => {
+                  // Get data from widget.data
+                  const widgetData = (displayWidget as any).data;
+                  
+                  if (!widgetData) {
+                    console.warn(`Widget "${displayWidget.id}" is missing data prop`);
+                    return null;
+                  }
+
+                  return (
+                    <DisplayWidgetComponent
+                      id={displayWidget.id}
+                      data={widgetData}
+                      onExpand={() => handleExpand(displayWidget.id)}
+                      expanded={true}
+                    />
+                  );
+                })()}
               </ScrollView>
             </SafeAreaView>
           </Animated.View>

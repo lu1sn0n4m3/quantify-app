@@ -27,6 +27,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SignOutButton } from '../components/base/SignOutButton';
 import { colors } from '../theme/colors';
+import { typography } from '../theme/typography';
 import HomeScreen from '../screens/HomeScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import ChatScreen from '../screens/ChatScreen';
@@ -84,7 +85,7 @@ function CustomDrawerContent(props: any) {
               onPress={() => props.navigation.navigate(dashboard.id)}
               labelStyle={[
                 styles.dashboardItemLabel,
-                isFocused && { fontWeight: '800', color: colors.pastelLilac }
+                isFocused && { ...typography.heading, fontSize: 15, color: colors.pastelLilac }
               ]}
               style={styles.dashboardItem}
               activeTintColor={colors.ink}
@@ -182,8 +183,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   drawerTitle: {
+    ...typography.heading,
     fontSize: 22,
-    fontWeight: '800',
     color: colors.ink,
   },
   divider: {
@@ -197,8 +198,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionHeaderText: {
+    ...typography.heading,
     fontSize: 14,
-    fontWeight: '800',
     color: colors.ink,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -211,8 +212,8 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
   },
   drawerItemLabel: {
+    ...typography.value,
     fontSize: 16,
-    fontWeight: '700',
     marginLeft: -16,
     color: colors.ink,
   },
@@ -224,6 +225,7 @@ const styles = StyleSheet.create({
     paddingLeft: 24,
   },
   dashboardItemLabel: {
+    ...typography.bodyLarge,
     fontSize: 15,
     fontWeight: '600',
     marginLeft: -16,
