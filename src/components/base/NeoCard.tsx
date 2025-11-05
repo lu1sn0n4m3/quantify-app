@@ -13,7 +13,7 @@
  * Used by: All widget components (StockPriceCard, TotalBalanceCard, etc.)
  */
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions } from 'react-native';
 import Svg, { Defs, LinearGradient, Stop, Rect, Pattern, Circle } from 'react-native-svg';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
@@ -39,8 +39,12 @@ export const NeoCard: React.FC<NeoCardProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const expandedScrollViewRef = useRef<ScrollView>(null);
   const [cardWidth, setCardWidth] = useState(() => Dimensions.get('window').width - 36);
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const totalPages = condensedPages.length;
+  const windowDimensions = useWindowDimensions();
+  const windowHeight = windowDimensions.height;
   
   // Generate unique IDs for SVG gradients to avoid conflicts
   const cardId = useRef(Math.random().toString(36).substring(2, 11)).current;
@@ -193,10 +197,15 @@ export const NeoCard: React.FC<NeoCardProps> = ({
         {expanded ? (
           // EXPANDED VIEW: ScrollView wraps entire content for scrolling
           <ScrollView 
+            ref={expandedScrollViewRef}
             style={styles.expandedScrollView}
             contentContainerStyle={styles.expandedScrollContent}
             showsVerticalScrollIndicator={true}
             stickyHeaderIndices={[0]}
+            onLayout={(event) => {
+              const { height } = event.nativeEvent.layout;
+              setScrollViewHeight(height);
+            }}
           >
             {/* Sticky Title Header - Matches condensed view exactly */}
             <View style={styles.titleContainerSticky}>
@@ -221,7 +230,7 @@ export const NeoCard: React.FC<NeoCardProps> = ({
               </View>
             </View>
             {/* Scrollable content below sticky title */}
-            <View style={styles.expandedContent}>
+            <View style={[styles.expandedContent, scrollViewHeight > 0 && { minHeight: Math.max(scrollViewHeight - 80, 400) }]}>
               {expandedView}
             </View>
           </ScrollView>
@@ -401,14 +410,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   expandedScrollContent: {
-    paddingBottom: 20,
+    flexGrow: 1, // Ensure content fills available space
+    paddingBottom: 0, // No padding at bottom - content extends fully
+    minHeight: '100%', // Ensure it fills at least the ScrollView height
   },
   expandedContent: {
     paddingHorizontal: 24, // Internal padding for content
     backgroundColor: colors.cardBg, // Match condensed widget background
     paddingTop: 0, // Start exactly at the gradient line
     marginTop: 0, // No gap - starts immediately after stripe
-    paddingBottom: 24, // Match condensed view padding
+    paddingBottom: 0, // No padding - content extends to bottom
+    marginBottom: 0, // No margin at bottom
+    flexGrow: 1, // Fill remaining space so background extends to bottom
+    minHeight: 400, // Minimum height to ensure background visibility
   },
   cardExpanded: {
     marginHorizontal: 0,

@@ -315,6 +315,8 @@ const styles = StyleSheet.create({
     padding: 0,
     marginTop: 0,
     paddingTop: 0,
+    marginBottom: 0,
+    paddingBottom: 0,
   },
   expandedContentWrapper: {
     flex: 1,
@@ -324,6 +326,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     marginBottom: 0,
     paddingBottom: 0,
+    minHeight: '100%', // Ensure it fills the container
   },
 });
 
