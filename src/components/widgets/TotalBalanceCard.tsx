@@ -18,6 +18,7 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { currency } from '../../utils/format';
 import { WidgetProps } from './widgetRegistry';
+import { sharedWidgetStyles } from './sharedWidgetStyles';
 
 /**
  * TotalBalanceCard Payload Type
@@ -86,13 +87,7 @@ const renderExpandedView = (data: TotalBalanceCardPayload): React.ReactElement =
         <>
           <View style={styles.divider} />
           <View style={styles.expandedSection}>
-            {data.summary && <Text style={styles.summary}>{data.summary}</Text>}
-            <Text style={styles.expandedText}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor eget massa viverra convallis. Integer ac lacinia nisl. Nulla facilisi. Cras imperdiet nunc a nibh tristique, vitae tempus magna consequat. Morbi id gravida nibh. Aliquam erat volutpat.
-            </Text>
-            <Text style={styles.expandedText}>
-              Vivamus vulputate viverra sapien, ac feugiat magna congue vitae. Fusce porttitor semper enim. Praesent at odio eget libero auctor hendrerit. Sed ultricies, leo id interdum porttitor, ipsum lorem eleifend neque, at iaculis purus nisl id erat.
-            </Text>
+            <Text style={styles.summary}>{data.summary}</Text>
           </View>
         </>
       )}
@@ -144,11 +139,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   expandedContent: {
-    // Expanded view layout
+    width: '100%',
   },
   expandedSection: {
-    width: '100%',
-    paddingTop: 8,
+    ...sharedWidgetStyles.expandedSection,
   },
   summary: {
     ...typography.body,
@@ -158,19 +152,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: 0.2,
   },
-  expandedText: {
-    ...typography.body,
-    color: colors.inkMuted,
-    lineHeight: 24,
-    marginBottom: 16,
-    letterSpacing: 0.1,
-  },
   divider: {
-    height: 1,
-    backgroundColor: colors.ink,
-    marginVertical: 32,
-    opacity: 0.15,
-    marginHorizontal: 0,
-    alignSelf: 'stretch',
+    ...sharedWidgetStyles.divider,
   },
 });

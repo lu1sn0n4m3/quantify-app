@@ -37,10 +37,6 @@ const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props: any) {
   const [dashboardsExpanded, setDashboardsExpanded] = useState(true);
-  
-  // Debug: Log to verify dashboards are loaded
-  console.log('Dashboards loaded:', dashboardsConfig.dashboards.length);
-  console.log('Current route:', props.state.routes[props.state.index].name);
 
   const toggleDashboards = () => {
     setDashboardsExpanded(!dashboardsExpanded);
@@ -225,23 +221,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: -0.5,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.ink,
-    opacity: 0.15,
-    marginVertical: 8,
-    marginHorizontal:10,
-  },
   drawerItem: {
     backgroundColor: 'transparent',
     borderRadius: 0,
     marginHorizontal: 20,
-    marginVertical: 0,
     paddingLeft: 20,
     paddingTop: 2,
     paddingBottom: 2,
     paddingRight: 5,
-    marginBottom: 0,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(10, 10, 10, 0.15)',
     borderLeftWidth: 0,
@@ -269,9 +256,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontSize: 16,
     lineHeight: 18,
-    marginLeft: 0,
-    marginVertical: 0,
-    paddingVertical: 0,
     letterSpacing: 0.1,
   },
   drawerItemLabelActive: {
@@ -289,12 +273,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 0,
     marginHorizontal: 20,
-    marginVertical: 0,
     paddingLeft: 40,
     paddingTop: 2,
     paddingBottom: 2,
     paddingRight: 5,
-    marginBottom: 0,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(10, 10, 10, 0.15)',
     borderLeftWidth: 0,
@@ -310,15 +292,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(10, 10, 10, 0.15)',
     paddingBottom: 2,
-    marginBottom: 0,
   },
   dashboardItemLabel: {
     ...typography.body,
     fontSize: 15,
     lineHeight: 17,
-    marginLeft: 0,
-    marginVertical: 0,
-    paddingVertical: 0,
     letterSpacing: 0.1,
   },
   dashboardItemLabelActive: {

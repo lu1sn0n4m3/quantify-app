@@ -44,69 +44,29 @@ export const NeoSidebarButton: React.FC<Props> = ({
   useEffect(() => {
     const targetRotation = isOpen ? 90 : 0;
     // When vertical, translate lines horizontally to space them
-    const targetTranslateX1 = isOpen ? -6 : 0;
-    const targetTranslateX2 = isOpen ? 0 : 0;
-    const targetTranslateX3 = isOpen ? 6 : 0;
+    const targetTranslateX = isOpen ? [-6, 0, 6] : [0, 0, 0];
     // When vertical, center all lines vertically (container center is at 10)
-    const targetTranslateY1 = isOpen ? 6 : 0; // from top: 4 to center: 10
-    const targetTranslateY2 = isOpen ? 1 : 0; // from top: 9 to center: 10
-    const targetTranslateY3 = isOpen ? -4 : 0; // from top: 14 to center: 10
+    const targetTranslateY = isOpen ? [6, 1, -4] : [0, 0, 0];
+    
+    // Helper to create spring animation with consistent config
+    const createSpring = (value: Animated.Value, toValue: number) =>
+      Animated.spring(value, {
+        toValue,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8,
+      });
     
     Animated.parallel([
-      Animated.spring(line1Rotation, {
-        toValue: targetRotation,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line2Rotation, {
-        toValue: targetRotation,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line3Rotation, {
-        toValue: targetRotation,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line1TranslateX, {
-        toValue: targetTranslateX1,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line2TranslateX, {
-        toValue: targetTranslateX2,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line3TranslateX, {
-        toValue: targetTranslateX3,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line1TranslateY, {
-        toValue: targetTranslateY1,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line2TranslateY, {
-        toValue: targetTranslateY2,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(line3TranslateY, {
-        toValue: targetTranslateY3,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
+      createSpring(line1Rotation, targetRotation),
+      createSpring(line2Rotation, targetRotation),
+      createSpring(line3Rotation, targetRotation),
+      createSpring(line1TranslateX, targetTranslateX[0]),
+      createSpring(line2TranslateX, targetTranslateX[1]),
+      createSpring(line3TranslateX, targetTranslateX[2]),
+      createSpring(line1TranslateY, targetTranslateY[0]),
+      createSpring(line2TranslateY, targetTranslateY[1]),
+      createSpring(line3TranslateY, targetTranslateY[2]),
     ]).start();
   }, [isOpen, line1Rotation, line2Rotation, line3Rotation, line1TranslateX, line2TranslateX, line3TranslateX, line1TranslateY, line2TranslateY, line3TranslateY]);
 
@@ -174,7 +134,6 @@ export const NeoSidebarButton: React.FC<Props> = ({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: 'transparent',
-    padding: 0,
   },
   container: {
     alignItems: 'center',

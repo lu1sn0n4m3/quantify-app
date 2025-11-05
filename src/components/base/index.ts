@@ -10,4 +10,6 @@ export type { NeoCardProps } from './NeoCard';
 export { NeoDotsButton } from './NeoDotsButton';
 export { NeoSidebarButton } from './NeoSidebarButton';
 export { SignOutButton } from './SignOutButton';
+export { PriceChart } from './PriceChart';
+export type { PriceChartProps } from './PriceChart';
 

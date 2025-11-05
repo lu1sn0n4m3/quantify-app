@@ -17,6 +17,7 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { currency } from '../../utils/format';
 import { WidgetProps } from './widgetRegistry';
+import { sharedWidgetStyles } from './sharedWidgetStyles';
 
 /**
  * PortfolioCard Payload Type
@@ -148,19 +149,13 @@ const styles = StyleSheet.create({
     color: colors.successLight,
   },
   expandedContent: {
-    // Expanded view layout
+    width: '100%',
   },
   expandedSection: {
-    width: '100%',
-    paddingTop: 8,
+    ...sharedWidgetStyles.expandedSection,
   },
   divider: {
-    height: 1,
-    backgroundColor: colors.ink,
-    marginVertical: 32,
-    opacity: 0.15,
-    marginHorizontal: 0,
-    alignSelf: 'stretch',
+    ...sharedWidgetStyles.divider,
   },
   summary: {
     ...typography.body,

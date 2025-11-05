@@ -41,9 +41,11 @@ import React from 'react';
 import { Text, StyleSheet, View, ScrollView } from 'react-native';
 import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
 import { NeoCard } from '../base/NeoCard';
+import { PriceChart } from '../base/PriceChart';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { WidgetProps } from './widgetRegistry';
+import { sharedWidgetStyles } from './sharedWidgetStyles';
 
 /**
  * StockPriceCard Payload Type
@@ -122,87 +124,6 @@ const generatePriceChartPath = (prices: Record<string, number>): string => {
   
   return `M ${points.join(' L ')}`;
 };
-
-/**
- * Generate detailed price chart for expanded view with grid lines and labels
- * Uses percentage-based coordinates that scale to container size
- */
-const generateDetailedPriceChart = (
-  prices: Record<string, number>
-): { path: string; gridLines: Array<{ x1: number; y1: number; x2: number; y2: number }>; labels: Array<{ x: number; y: number; text: string }>; width: number; height: number } => {
-  const priceArray = getPriceArray(prices);
-  const sortedDates = Object.keys(prices).sort();
-  
-  if (priceArray.length < 2) {
-    return { path: '', gridLines: [], labels: [], width: 0, height: 0 };
-  }
-  
-  // Use percentage-based coordinates (0-100) that will scale with container
-  const width = 100;
-  const height = 100;
-  const paddingLeft = 12; // percentage
-  const paddingRight = 5;
-  const paddingTop = 8;
-  const paddingBottom = 15;
-  const chartWidth = width - paddingLeft - paddingRight;
-  const chartHeight = height - paddingTop - paddingBottom;
-  
-  const max = Math.max(...priceArray);
-  const min = Math.min(...priceArray);
-  const range = max - min || 1;
-  
-  // Generate price path using percentage coordinates
-  const points = priceArray.map((price, index) => {
-    const x = paddingLeft + (index / (priceArray.length - 1)) * chartWidth;
-    const y = paddingTop + chartHeight - ((price - min) / range) * chartHeight;
-    return `${x},${y}`;
-  });
-  const path = `M ${points.join(' L ')}`;
-  
-  // Generate grid lines (horizontal lines for price levels)
-  const gridLines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
-  const numGridLines = 5;
-  for (let i = 0; i <= numGridLines; i++) {
-    const value = min + (range / numGridLines) * i;
-    const y = paddingTop + chartHeight - ((value - min) / range) * chartHeight;
-    gridLines.push({
-      x1: paddingLeft,
-      y1: y,
-      x2: paddingLeft + chartWidth,
-      y2: y,
-    });
-  }
-  
-  // Generate labels for Y-axis (price values)
-  const labels: Array<{ x: number; y: number; text: string }> = [];
-  for (let i = 0; i <= numGridLines; i++) {
-    const value = min + (range / numGridLines) * i;
-    const y = paddingTop + chartHeight - ((value - min) / range) * chartHeight;
-    labels.push({
-      x: paddingLeft - 2,
-      y: y + 1,
-      text: `$${value.toFixed(2)}`,
-    });
-  }
-  
-  // Add date labels for X-axis (show first, middle, last)
-  if (sortedDates.length > 0) {
-    const dateIndices = [0, Math.floor(sortedDates.length / 2), sortedDates.length - 1];
-    dateIndices.forEach((idx) => {
-      const x = paddingLeft + (idx / (priceArray.length - 1)) * chartWidth;
-      const date = new Date(sortedDates[idx]);
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-      labels.push({
-        x: x,
-        y: height - paddingBottom + 5,
-        text: dateStr,
-      });
-    });
-  }
-  
-  return { path, gridLines, labels, width: 100, height: 100 };
-};
-
 
 /**
  * Render Page 1: Price Chart
@@ -299,8 +220,6 @@ const renderCondensedPages = (
 const renderExpandedView = (data: StockPriceCardPayload): React.ReactElement => {
   const priceInfo = getPriceChange(data.prices);
   const priceArray = getPriceArray(data.prices);
-  const sortedDates = Object.keys(data.prices).sort();
-  const chartData = generateDetailedPriceChart(data.prices);
   
   // Calculate additional metrics
   const highestPrice = Math.max(...priceArray);
@@ -324,72 +243,13 @@ const renderExpandedView = (data: StockPriceCardPayload): React.ReactElement => 
           </View>
         </View>
         
-        {/* Detailed Chart with Grid */}
+        {/* Modern Price Chart */}
         <View style={styles.detailedChartContainer}>
-          <Svg viewBox={`0 0 ${chartData.width} ${chartData.height}`} style={styles.detailedChart} preserveAspectRatio="none">
-            {/* Grid lines */}
-            {chartData.gridLines.map((line, index) => (
-              <Path
-                key={`grid-${index}`}
-                d={`M ${line.x1} ${line.y1} L ${line.x2} ${line.y2}`}
-                stroke={colors.ink}
-                strokeWidth="0.5"
-                strokeOpacity="0.12"
-                strokeDasharray="2,3"
-              />
-            ))}
-            
-            {/* Area fill under the line */}
-            <Path
-              d={`${chartData.path} L ${chartData.width - 5} ${chartData.height - 15} L ${12} ${chartData.height - 15} Z`}
-              fill={priceInfo.isPositive ? colors.successLight : colors.warning}
-              fillOpacity="0.08"
-            />
-            
-            {/* Price line */}
-            <Path
-              d={chartData.path}
-              stroke={priceInfo.isPositive ? colors.successLight : colors.warning}
-              strokeWidth="1"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-            
-            {/* Data point dots */}
-            {priceArray.map((price, index) => {
-              const max = Math.max(...priceArray);
-              const min = Math.min(...priceArray);
-              const range = max - min || 1;
-              const x = 12 + (index / (priceArray.length - 1)) * (chartData.width - 12 - 5);
-              const y = 8 + (chartData.height - 8 - 15) - ((price - min) / range) * (chartData.height - 8 - 15);
-              return (
-                <Rect
-                  key={index}
-                  x={x - 0.5}
-                  y={y - 0.5}
-                  width="1"
-                  height="1"
-                  fill={priceInfo.isPositive ? colors.successLight : colors.warning}
-                />
-              );
-            })}
-            
-            {/* Labels */}
-            {chartData.labels.map((label, index) => (
-              <SvgText
-                key={`label-${index}`}
-                x={label.x}
-                y={label.y}
-                fontSize="2.5"
-                fill={colors.ink}
-                fillOpacity="0.7"
-                textAnchor={label.x < 12 ? 'end' : 'middle'}
-              >
-                {label.text}
-              </SvgText>
-            ))}
-          </Svg>
+          <PriceChart 
+            prices={data.prices} 
+            isPositive={priceInfo.isPositive}
+            height={200}
+          />
         </View>
         
         {/* Additional Metrics */}
@@ -431,7 +291,7 @@ const renderExpandedView = (data: StockPriceCardPayload): React.ReactElement => 
       <View style={styles.divider} />
       
       {/* Summary Section */}
-      <View style={styles.expandedSection}>
+      <View style={[styles.expandedSection, styles.summarySectionExpanded]}>
         {renderSummaryPage(data, false)}
       </View>
     </View>
@@ -543,13 +403,13 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginBottom: 4,
     opacity: 1,
-    fontSize: 11,
+    fontSize: 10,
   },
   ratioValue: {
     ...typography.value,
     color: colors.ink,
     letterSpacing: -0.3,
-    fontSize: 14,
+    fontSize: 13,
   },
   summaryContainerCondensed: {
     alignSelf: 'center',
@@ -564,14 +424,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   expandedContent: {
-    // Expanded view layout
+    width: '100%',
   },
   expandedSection: {
-    width: '100%',
-    paddingTop: 8,
+    ...sharedWidgetStyles.expandedSection,
   },
   expandedHeader: {
-    marginBottom: 24,
+    marginBottom: 12,
   },
   expandedPrice: {
     ...typography.headingLarge,
@@ -585,17 +444,8 @@ const styles = StyleSheet.create({
   detailedChartContainer: {
     width: '100%',
     alignItems: 'center',
-    marginVertical: 24,
-    backgroundColor: colors.surface,
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    marginTop: 8,
+    marginBottom: 20,
   },
   detailedChart: {
     width: '100%',
@@ -605,58 +455,58 @@ const styles = StyleSheet.create({
   metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
     marginTop: 12,
   },
   metricItem: {
     flex: 1,
     minWidth: '47%',
     backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
+    padding: 8,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderLight,
     shadowColor: colors.shadow,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   metricLabel: {
     ...typography.metricLabel,
     color: colors.inkMuted,
-    marginBottom: 8,
+    marginBottom: 4,
     opacity: 1,
+    fontSize: 10,
   },
   metricValue: {
     ...typography.metricValue,
     color: colors.ink,
     letterSpacing: -0.3,
+    fontSize: 13,
   },
   expandedRatiosGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
   },
   expandedRatioItem: {
     width: '47%',
     backgroundColor: colors.surface,
-    padding: 18,
-    borderRadius: 12,
+    padding: 8,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderLight,
     shadowColor: colors.shadow,
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   divider: {
-    height: 1,
-    backgroundColor: colors.ink,
-    marginVertical: 32,
-    opacity: 0.15,
-    marginHorizontal: 0,
-    alignSelf: 'stretch',
+    ...sharedWidgetStyles.divider,
+  },
+  summarySectionExpanded: {
+    paddingBottom: 32,
   },
 });

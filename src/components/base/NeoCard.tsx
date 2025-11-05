@@ -43,11 +43,16 @@ export const NeoCard: React.FC<NeoCardProps> = ({
   const [cardWidth, setCardWidth] = useState(() => Dimensions.get('window').width - 36);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const totalPages = condensedPages.length;
-  const windowDimensions = useWindowDimensions();
-  const windowHeight = windowDimensions.height;
   
   // Generate unique IDs for SVG gradients to avoid conflicts
   const cardId = useRef(Math.random().toString(36).substring(2, 11)).current;
+
+  // Helper to create gradient stops (reused across multiple gradients)
+  const gradientStops = [
+    <Stop key="0" offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />,
+    <Stop key="1" offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />,
+    <Stop key="2" offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />,
+  ];
 
   // Handle scroll for pagination
   const maybeUpdateWidth = (nextWidth: number) => {
@@ -84,75 +89,12 @@ export const NeoCard: React.FC<NeoCardProps> = ({
       {/* Header Stripe - Only show in condensed view */}
       {!expanded && (
         <View style={styles.headerStripe} pointerEvents="none">
-          <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id={`stripeGradient-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
-                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
-                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
-              </LinearGradient>
-            </Defs>
-            <Rect width="100%" height="2" fill={`url(#stripeGradient-${cardId})`} />
-          </Svg>
+          <View style={styles.greyLine} />
         </View>
       )}
 
-      {/* Edge Borders - Only show in condensed view */}
+      {/* Inner glow overlays for depth - Only show in condensed view */}
       {!expanded && (
-      <View style={styles.edgeBorders} pointerEvents="none">
-        {/* Top border */}
-        <View style={styles.borderTop}>
-          <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id={`borderGradient-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
-                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
-                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
-              </LinearGradient>
-            </Defs>
-            <Rect width="100%" height="2" fill={`url(#borderGradient-${cardId})`} />
-          </Svg>
-        </View>
-        {/* Bottom border */}
-        <View style={styles.borderBottom}>
-          <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id={`borderGradientBottom-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
-                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
-                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
-              </LinearGradient>
-            </Defs>
-            <Rect width="100%" height="2" fill={`url(#borderGradientBottom-${cardId})`} />
-          </Svg>
-        </View>
-        {/* Left border */}
-        <View style={styles.borderLeft}>
-          <Svg width="2" height="100%" style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id={`borderGradientLeft-${cardId}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
-                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
-                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
-              </LinearGradient>
-            </Defs>
-            <Rect width="2" height="100%" fill={`url(#borderGradientLeft-${cardId})`} />
-          </Svg>
-        </View>
-        {/* Right border */}
-        <View style={styles.borderRight}>
-          <Svg width="2" height="100%" style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id={`borderGradientRight-${cardId}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
-                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
-                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
-              </LinearGradient>
-            </Defs>
-            <Rect width="2" height="100%" fill={`url(#borderGradientRight-${cardId})`} />
-          </Svg>
-        </View>
-        {/* Inner glow overlays for depth */}
         <View style={styles.innerGlow} pointerEvents="none">
           <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
             <Defs>
@@ -179,7 +121,6 @@ export const NeoCard: React.FC<NeoCardProps> = ({
             <Rect x="70%" width="30%" height="100%" fill={`url(#innerGlowRight-${cardId})`} />
           </Svg>
         </View>
-      </View>
       )}
 
       {/* Content Layer - Above all decorative elements */}
@@ -215,18 +156,9 @@ export const NeoCard: React.FC<NeoCardProps> = ({
                   <NeoDotsButton onPress={onExpand} expanded={expanded} style={styles.expand} testID="expand-btn" />
                 )}
               </View>
-              {/* Gradient line separating title from content */}
+              {/* Grey line separating title from content */}
               <View style={styles.stickyHeaderStripe} pointerEvents="none">
-                <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
-                  <Defs>
-                    <LinearGradient id={`stickyStripeGradient-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                      <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
-                      <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
-                      <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
-                    </LinearGradient>
-                  </Defs>
-                  <Rect width="100%" height="2" fill={`url(#stickyStripeGradient-${cardId})`} />
-                </Svg>
+                <View style={styles.greyLine} />
               </View>
             </View>
             {/* Scrollable content below sticky title */}
@@ -270,13 +202,13 @@ export const NeoCard: React.FC<NeoCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.cardBg,
-    borderWidth: 0,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     borderRadius: 10,
     paddingTop: 18,
     paddingBottom: 24,
     paddingHorizontal: 24,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginVertical: 12,
     overflow: 'hidden',
     shadowColor: colors.ink,
@@ -284,6 +216,19 @@ const styles = StyleSheet.create({
     shadowRadius: 35,
     shadowOffset: { width: 0, height: 8 },
     elevation: 15,
+  },
+  cardExpanded: {
+    marginHorizontal: 0,
+    marginVertical: 0,
+    borderRadius: 0,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    flex: 1,
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+    overflow: 'visible',
   },
   patternOverlay: {
     position: 'absolute',
@@ -298,49 +243,8 @@ const styles = StyleSheet.create({
     top: 54, // Position below title area - equal spacing from title
     left: 0,
     right: 0,
-    height: 2,
+    height: 1,
     zIndex: 1,
-  },
-  headerStripeExpanded: {
-    top: 60, // Position below fixed title in expanded view
-    zIndex: 9, // Below title but above content
-  },
-  edgeBorders: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
-    pointerEvents: 'none',
-  },
-  borderTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-  },
-  borderBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-  },
-  borderLeft: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    width: 2,
-  },
-  borderRight: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: 2,
   },
   innerGlow: {
     position: 'absolute',
@@ -355,10 +259,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
     flex: 1,
-    margin: 0,
-    padding: 0,
-    marginTop: 0,
-    paddingTop: 0,
   },
   titleContainer: {
     flexDirection: 'row',
@@ -369,24 +269,24 @@ const styles = StyleSheet.create({
   titleContainerSticky: {
     backgroundColor: colors.cardBg, // Solid background for sticky header
     zIndex: 10,
-    marginBottom: 0, // No margin - content starts exactly after stripe
-    paddingBottom: 0, // No padding - stripe is flush with bottom
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
-    paddingTop: 18, // Match card's paddingTop
-    paddingHorizontal: 24, // Internal padding for title content
+    paddingTop: 18,
+    paddingHorizontal: 20, // Match screen edge padding
   },
   stickyHeaderStripe: {
-    height: 2,
+    height: 1,
     width: '100%',
     position: 'relative',
-    marginBottom: 0,
-    marginTop: 0, // No margin - flush with titleRow bottom
-    marginHorizontal: 0, // Full width - extend to card edges
+  },
+  greyLine: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#E0E0E0',
   },
   title: { 
     ...typography.heading,
@@ -410,32 +310,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   expandedScrollContent: {
-    flexGrow: 1, // Ensure content fills available space
-    paddingBottom: 0, // No padding at bottom - content extends fully
-    minHeight: '100%', // Ensure it fills at least the ScrollView height
+    flexGrow: 1,
+    minHeight: '100%',
   },
   expandedContent: {
-    paddingHorizontal: 24, // Internal padding for content
-    backgroundColor: colors.cardBg, // Match condensed widget background
-    paddingTop: 0, // Start exactly at the gradient line
-    marginTop: 0, // No gap - starts immediately after stripe
-    paddingBottom: 0, // No padding - content extends to bottom
-    marginBottom: 0, // No margin at bottom
-    flexGrow: 1, // Fill remaining space so background extends to bottom
-    minHeight: 400, // Minimum height to ensure background visibility
-  },
-  cardExpanded: {
-    marginHorizontal: 0,
-    marginVertical: 0,
-    marginTop: 0,
-    marginBottom: 0,
-    borderRadius: 0,
-    flex: 1,
-    paddingTop: 0, // No padding - content starts right at top
-    paddingBottom: 0, // No padding - extends to bottom
-    paddingHorizontal: 0, // Edge-to-edge - no horizontal padding
-    backgroundColor: 'transparent', // Transparent to show MainView background
-    overflow: 'visible', // Allow background to show when overscrolling
+    paddingHorizontal: 20, // Consistent padding from screen edges
+    backgroundColor: colors.cardBg,
+    flexGrow: 1,
+    minHeight: 400,
   },
 });
 

@@ -18,14 +18,15 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Animated, StyleSheet, Dimensions, ScrollView, BackHandler, View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { Animated, StyleSheet, Dimensions, ScrollView, BackHandler, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import Svg, { Defs, Pattern, Rect, Circle, LinearGradient, Stop } from 'react-native-svg';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
+import { BackgroundTexture } from '../components/base/BackgroundTexture';
 import { colors } from '../theme/colors';
 import { getWidgetComponent } from '../components/widgets/widgetComponentRegistry';
+import { validateWidget } from '../components/widgets/widgetValidation';
 import dashboardsConfig from '../config/dashboards.json';
 
 const { width } = Dimensions.get('window');
@@ -47,7 +48,6 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
   const scaleYAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const blurAnim = useRef(new Animated.Value(0)).current;
-  const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
   const headerRef = useRef<View>(null);
@@ -142,9 +142,6 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
   const widgetIdToDisplay = expandedId || lastExpandedId.current;
   const displayWidget = dashboard.widgets.find(w => w.id === widgetIdToDisplay);
   const DisplayWidgetComponent = displayWidget ? getWidgetComponent(displayWidget.type) : null;
-  
-  // Generate unique ID for SVG patterns in expanded view
-  const expandedViewId = useRef(Math.random().toString(36).substring(2, 11)).current;
 
   return (
     <>
@@ -167,26 +164,16 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
       <ScreenLayout contentStyle={styles.mainContent}>
         {/* Dynamically render all widgets from the dashboard config */}
         {dashboard.widgets.map((widget) => {
-          const WidgetComponent = getWidgetComponent(widget.type);
-          
-          if (!WidgetComponent) {
-            console.warn(`Widget type "${widget.type}" not found in registry`);
-            return null;
-          }
-
-          // Get data from widget.data
-          const widgetData = (widget as any).data;
-
-          if (!widgetData) {
-            console.warn(`Widget "${widget.id}" is missing data prop`);
+          const validation = validateWidget(widget, widget.id);
+          if (!validation.isValid || !validation.Component || !validation.data) {
             return null;
           }
 
           return (
-            <WidgetComponent
+            <validation.Component
               key={widget.id}
               id={widget.id}
-              data={widgetData}
+              data={validation.data}
               onExpand={() => handleExpand(widget.id)}
               expanded={false}
             />
@@ -220,39 +207,20 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
               }
             ]}
           >
-            {/* Background Texture - Same as main view */}
-            <View style={styles.expandedTextureOverlay} pointerEvents="none">
-              <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
-                <Defs>
-                  <Pattern id={`expandedPattern-${expandedViewId}`} x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <Circle cx="5" cy="5" r="0.7" fill={colors.ink} opacity="0.05" />
-                  </Pattern>
-                  <LinearGradient id={`expandedGradient-${expandedViewId}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                    <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.12" />
-                    <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.08" />
-                    <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.10" />
-                  </LinearGradient>
-                </Defs>
-                <Rect width="100%" height="100%" fill={`url(#expandedPattern-${expandedViewId})`} />
-                <Rect width="100%" height="100%" fill={`url(#expandedGradient-${expandedViewId})`} />
-              </Svg>
-            </View>
+            <BackgroundTexture />
             
             <View style={styles.expandedSafeArea}>
               <View style={styles.expandedContentWrapper}>
-                {displayWidget && DisplayWidgetComponent && (() => {
-                  // Get data from widget.data
-                  const widgetData = (displayWidget as any).data;
-                  
-                  if (!widgetData) {
-                    console.warn(`Widget "${displayWidget.id}" is missing data prop`);
+                {displayWidget && (() => {
+                  const validation = validateWidget(displayWidget, displayWidget.id);
+                  if (!validation.isValid || !validation.Component || !validation.data) {
                     return null;
                   }
 
                   return (
-                    <DisplayWidgetComponent
+                    <validation.Component
                       id={displayWidget.id}
-                      data={widgetData}
+                      data={validation.data}
                       onExpand={() => handleExpand(displayWidget.id)}
                       expanded={true}
                     />
@@ -275,13 +243,9 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 9999,
     backgroundColor: colors.screenBg,
-    margin: 0,
-    padding: 0,
-    paddingBottom: 0,
-    marginBottom: 0,
   },
   mainContent: {
-    paddingTop: 75,
+    paddingTop: 65,
     paddingBottom: 20,
   },
   expandedOverlayBase: {
@@ -301,32 +265,12 @@ const styles = StyleSheet.create({
     transformOrigin: 'top center',
     overflow: 'hidden',
   },
-  expandedTextureOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
-  },
   expandedSafeArea: {
     flex: 1,
-    margin: 0,
-    padding: 0,
-    marginTop: 0,
-    paddingTop: 0,
-    marginBottom: 0,
-    paddingBottom: 0,
   },
   expandedContentWrapper: {
     flex: 1,
-    margin: 0,
-    padding: 0,
-    marginTop: 0,
-    paddingTop: 0,
-    marginBottom: 0,
-    paddingBottom: 0,
-    minHeight: '100%', // Ensure it fills the container
+    minHeight: '100%',
   },
 });
 
