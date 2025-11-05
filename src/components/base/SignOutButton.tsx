@@ -44,24 +44,26 @@ export const SignOutButton = () => {
 
 const styles = StyleSheet.create({
   button: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: colors.warning,
-    borderWidth: 3,
-    borderColor: colors.ink,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    paddingHorizontal: 20,
+    paddingTop: 2,
+    paddingBottom: 2,
+    marginHorizontal: 0,
+    minHeight: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center', // Center the button in its container
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.3,
-    shadowRadius: 0,
-    shadowOffset: { width: 4, height: 4 },
   },
   text: {
-    ...typography.heading,
-    fontSize: 14,
-    color: colors.white,
+    ...typography.body,
+    fontSize: 16,
+    lineHeight: 18,
+    marginLeft: 0,
+    marginVertical: 0,
+    paddingVertical: 0,
+    color: colors.warning,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
 });
 

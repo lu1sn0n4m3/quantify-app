@@ -38,7 +38,7 @@
  * - Completely separate layout from condensed view
  */
 import React from 'react';
-import { Text, StyleSheet, View } from 'react-native';
+import { Text, StyleSheet, View, ScrollView } from 'react-native';
 import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
 import { NeoCard } from '../base/NeoCard';
 import { colors } from '../../theme/colors';
@@ -245,7 +245,7 @@ const renderRatiosPage = (
   
   return (
     <View style={styles.pageInner}>
-      <Text style={styles.sectionTitle}>Financial Ratios</Text>
+      <Text style={styles.sectionTitleCompact}>Financial Ratios</Text>
       <View style={styles.ratiosGrid}>
         {ratios.map(([label, value], index) => (
           <View key={index} style={styles.ratioItem}>
@@ -264,11 +264,15 @@ const renderRatiosPage = (
 const renderSummaryPage = (data: StockPriceCardPayload, isCondensed: boolean = false): React.ReactElement => {
   return (
     <View style={styles.pageInner}>
-      <Text style={styles.sectionTitle}>Analysis Summary</Text>
+      <Text style={styles.sectionTitleCompact}>Analysis Summary</Text>
       {isCondensed ? (
-        <View style={styles.summaryContainerCondensed}>
+        <ScrollView 
+          style={styles.summaryContainerCondensed}
+          showsVerticalScrollIndicator={true}
+          nestedScrollEnabled={true}
+        >
           <Text style={styles.summaryText}>{data.summary}</Text>
-        </View>
+        </ScrollView>
       ) : (
         <Text style={styles.summaryText}>{data.summary}</Text>
       )}
@@ -505,20 +509,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     letterSpacing: -0.4,
   },
+  sectionTitleCompact: {
+    ...typography.heading,
+    color: colors.ink,
+    marginBottom: 12,
+    fontSize: 18,
+    letterSpacing: -0.4,
+  },
   ratiosGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 8,
     alignSelf: 'center',
-    justifyContent: 'center',
-    width: '92%',
+    justifyContent: 'flex-start',
+    width: '100%',
   },
   ratioItem: {
-    width: '47%',
+    width: '31%',
     backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.borderLight,
     shadowColor: colors.shadow,
@@ -530,18 +541,20 @@ const styles = StyleSheet.create({
   ratioLabel: {
     ...typography.metricLabel,
     color: colors.inkMuted,
-    marginBottom: 8,
+    marginBottom: 4,
     opacity: 1,
+    fontSize: 11,
   },
   ratioValue: {
     ...typography.value,
     color: colors.ink,
     letterSpacing: -0.3,
+    fontSize: 14,
   },
   summaryContainerCondensed: {
     alignSelf: 'center',
-    width: '92%',
-    maxHeight: 220,
+    width: '100%',
+    maxHeight: 180,
   },
   summaryText: {
     ...typography.body,

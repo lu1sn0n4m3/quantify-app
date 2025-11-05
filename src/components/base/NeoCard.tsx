@@ -14,6 +14,7 @@
  */
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import Svg, { Defs, LinearGradient, Stop, Rect, Pattern, Circle } from 'react-native-svg';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { NeoDotsButton } from './NeoDotsButton';
@@ -40,6 +41,9 @@ export const NeoCard: React.FC<NeoCardProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
   const [cardWidth, setCardWidth] = useState(() => Dimensions.get('window').width - 36);
   const totalPages = condensedPages.length;
+  
+  // Generate unique IDs for SVG gradients to avoid conflicts
+  const cardId = useRef(Math.random().toString(36).substring(2, 11)).current;
 
   // Handle scroll for pagination
   const maybeUpdateWidth = (nextWidth: number) => {
@@ -58,47 +62,198 @@ export const NeoCard: React.FC<NeoCardProps> = ({
   };
 
   return (
-    <View style={styles.card}>
-      {onExpand && (
-        <NeoDotsButton onPress={onExpand} expanded={expanded} style={styles.expand} testID="expand-btn" />
-      )}
-      <View style={{ marginBottom: 20 }}>
-        <Text style={styles.title}>{title}</Text>
-      </View>
-      
-      {expanded ? (
-        // EXPANDED VIEW: Render expanded content
-        <View style={styles.expandedContent}>
-          {expandedView}
+    <View style={[styles.card, expanded && styles.cardExpanded]}>
+      {/* Subtle Background Pattern - Only show in condensed view */}
+      {!expanded && (
+        <View style={styles.patternOverlay} pointerEvents="none">
+          <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <Pattern id={`dotPattern-${cardId}`} x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+                <Circle cx="4" cy="4" r="0.5" fill={colors.ink} opacity="0.03" />
+              </Pattern>
+            </Defs>
+            <Rect width="100%" height="100%" fill={`url(#dotPattern-${cardId})`} />
+          </Svg>
         </View>
-      ) : (
-        // CONDENSED VIEW: Handle pagination
-        <>
-          {totalPages > 0 ? (
-            <ScrollView
-              ref={scrollViewRef}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-              style={styles.scrollView}
-              onLayout={(event) => {
-                maybeUpdateWidth(event.nativeEvent.layout.width);
-              }}
-            >
-              {condensedPages.map((page, index) => (
-                <View key={index} style={[styles.page, { width: cardWidth }]}>
-                  {page}
-                </View>
-              ))}
-            </ScrollView>
-          ) : null}
-          {totalPages > 1 && (
-            <WidgetPageIndicator currentPage={currentPage} totalPages={totalPages} />
-          )}
-        </>
       )}
+
+      {/* Header Stripe - Only show in condensed view */}
+      {!expanded && (
+        <View style={styles.headerStripe} pointerEvents="none">
+          <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={`stripeGradient-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
+                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
+                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="100%" height="2" fill={`url(#stripeGradient-${cardId})`} />
+          </Svg>
+        </View>
+      )}
+
+      {/* Edge Borders - Only show in condensed view */}
+      {!expanded && (
+      <View style={styles.edgeBorders} pointerEvents="none">
+        {/* Top border */}
+        <View style={styles.borderTop}>
+          <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={`borderGradient-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
+                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
+                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="100%" height="2" fill={`url(#borderGradient-${cardId})`} />
+          </Svg>
+        </View>
+        {/* Bottom border */}
+        <View style={styles.borderBottom}>
+          <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={`borderGradientBottom-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
+                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
+                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="100%" height="2" fill={`url(#borderGradientBottom-${cardId})`} />
+          </Svg>
+        </View>
+        {/* Left border */}
+        <View style={styles.borderLeft}>
+          <Svg width="2" height="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={`borderGradientLeft-${cardId}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
+                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
+                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="2" height="100%" fill={`url(#borderGradientLeft-${cardId})`} />
+          </Svg>
+        </View>
+        {/* Right border */}
+        <View style={styles.borderRight}>
+          <Svg width="2" height="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={`borderGradientRight-${cardId}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
+                <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
+                <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="2" height="100%" fill={`url(#borderGradientRight-${cardId})`} />
+          </Svg>
+        </View>
+        {/* Inner glow overlays for depth */}
+        <View style={styles.innerGlow} pointerEvents="none">
+          <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={`innerGlowTop-${cardId}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <Stop offset="0%" stopColor={colors.pastelLilac} stopOpacity="0.08" />
+                <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
+              </LinearGradient>
+              <LinearGradient id={`innerGlowBottom-${cardId}`} x1="0%" y1="100%" x2="0%" y2="0%">
+                <Stop offset="0%" stopColor={colors.pastelBlush} stopOpacity="0.06" />
+                <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
+              </LinearGradient>
+              <LinearGradient id={`innerGlowLeft-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.05" />
+                <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
+              </LinearGradient>
+              <LinearGradient id={`innerGlowRight-${cardId}`} x1="100%" y1="0%" x2="0%" y2="0%">
+                <Stop offset="0%" stopColor={colors.pastelMint} stopOpacity="0.05" />
+                <Stop offset="100%" stopColor="transparent" stopOpacity="0" />
+              </LinearGradient>
+            </Defs>
+            <Rect width="100%" height="30%" fill={`url(#innerGlowTop-${cardId})`} />
+            <Rect y="70%" width="100%" height="30%" fill={`url(#innerGlowBottom-${cardId})`} />
+            <Rect width="30%" height="100%" fill={`url(#innerGlowLeft-${cardId})`} />
+            <Rect x="70%" width="30%" height="100%" fill={`url(#innerGlowRight-${cardId})`} />
+          </Svg>
+        </View>
+      </View>
+      )}
+
+      {/* Content Layer - Above all decorative elements */}
+      <View style={styles.contentLayer}>
+        {/* Title - Only for condensed view */}
+        {!expanded && (
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{title}</Text>
+            {onExpand && (
+              <NeoDotsButton onPress={onExpand} expanded={expanded} style={styles.expand} testID="expand-btn" />
+            )}
+          </View>
+        )}
+        
+        {expanded ? (
+          // EXPANDED VIEW: ScrollView wraps entire content for scrolling
+          <ScrollView 
+            style={styles.expandedScrollView}
+            contentContainerStyle={styles.expandedScrollContent}
+            showsVerticalScrollIndicator={true}
+            stickyHeaderIndices={[0]}
+          >
+            {/* Sticky Title Header - Matches condensed view exactly */}
+            <View style={styles.titleContainerSticky}>
+              <View style={styles.titleRow}>
+                <Text style={styles.title}>{title}</Text>
+                {onExpand && (
+                  <NeoDotsButton onPress={onExpand} expanded={expanded} style={styles.expand} testID="expand-btn" />
+                )}
+              </View>
+              {/* Gradient line separating title from content */}
+              <View style={styles.stickyHeaderStripe} pointerEvents="none">
+                <Svg height="2" width="100%" style={StyleSheet.absoluteFill}>
+                  <Defs>
+                    <LinearGradient id={`stickyStripeGradient-${cardId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                      <Stop offset="0%" stopColor={colors.pastelBlue} stopOpacity="0.55" />
+                      <Stop offset="50%" stopColor={colors.pastelMint} stopOpacity="0.45" />
+                      <Stop offset="100%" stopColor={colors.pastelBlush} stopOpacity="0.55" />
+                    </LinearGradient>
+                  </Defs>
+                  <Rect width="100%" height="2" fill={`url(#stickyStripeGradient-${cardId})`} />
+                </Svg>
+              </View>
+            </View>
+            {/* Scrollable content below sticky title */}
+            <View style={styles.expandedContent}>
+              {expandedView}
+            </View>
+          </ScrollView>
+        ) : (
+          // CONDENSED VIEW: Handle pagination
+          <>
+            {totalPages > 0 ? (
+              <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                style={styles.scrollView}
+                onLayout={(event) => {
+                  maybeUpdateWidth(event.nativeEvent.layout.width);
+                }}
+              >
+                {condensedPages.map((page, index) => (
+                  <View key={index} style={[styles.page, { width: cardWidth }]}>
+                    {page}
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
+            {totalPages > 1 && (
+              <WidgetPageIndicator currentPage={currentPage} totalPages={totalPages} />
+            )}
+          </>
+        )}
+      </View>
     </View>
   );
 };
@@ -106,31 +261,133 @@ export const NeoCard: React.FC<NeoCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.cardBg,
-    borderWidth: 1.5,
-    borderColor: colors.inkMuted,
+    borderWidth: 0,
+    borderColor: 'transparent',
     borderRadius: 10,
-    padding: 24,
+    paddingTop: 18,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
     marginHorizontal: 20,
     marginVertical: 12,
-    // Layered shadows for depth
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6, // Android shadow
+    overflow: 'hidden',
+    shadowColor: colors.ink,
+    shadowOpacity: 0.25,
+    shadowRadius: 35,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 15,
+  },
+  patternOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  headerStripe: {
+    position: 'absolute',
+    top: 54, // Position below title area - equal spacing from title
+    left: 0,
+    right: 0,
+    height: 2,
+    zIndex: 1,
+  },
+  headerStripeExpanded: {
+    top: 60, // Position below fixed title in expanded view
+    zIndex: 9, // Below title but above content
+  },
+  edgeBorders: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+    pointerEvents: 'none',
+  },
+  borderTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+  },
+  borderBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+  },
+  borderLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: 2,
+  },
+  borderRight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 2,
+  },
+  innerGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+    pointerEvents: 'none',
+  },
+  contentLayer: {
+    position: 'relative',
+    zIndex: 2,
+    flex: 1,
+    margin: 0,
+    padding: 0,
+    marginTop: 0,
+    paddingTop: 0,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  titleContainerSticky: {
+    backgroundColor: colors.cardBg, // Solid background for sticky header
+    zIndex: 10,
+    marginBottom: 0, // No margin - content starts exactly after stripe
+    paddingBottom: 0, // No padding - stripe is flush with bottom
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    paddingTop: 18, // Match card's paddingTop
+    paddingHorizontal: 24, // Internal padding for title content
+  },
+  stickyHeaderStripe: {
+    height: 2,
+    width: '100%',
+    position: 'relative',
+    marginBottom: 0,
+    marginTop: 0, // No margin - flush with titleRow bottom
+    marginHorizontal: 0, // Full width - extend to card edges
   },
   title: { 
     ...typography.heading,
     fontSize: 17,
     color: colors.ink,
-    marginBottom: 16,
     letterSpacing: -0.4,
+    flex: 1,
   },
   expand: { 
-    position: 'absolute', 
-    top: 20, 
-    right: 20, 
-    zIndex: 2 
+    marginLeft: 12,
   },
   scrollView: {
     marginHorizontal: -24, // Offset card padding for full-width scrolling
@@ -140,8 +397,31 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingHorizontal: 24,
   },
+  expandedScrollView: {
+    flex: 1,
+  },
+  expandedScrollContent: {
+    paddingBottom: 20,
+  },
   expandedContent: {
-    // No special styling needed - widget handles its own layout
+    paddingHorizontal: 24, // Internal padding for content
+    backgroundColor: colors.cardBg, // Match condensed widget background
+    paddingTop: 0, // Start exactly at the gradient line
+    marginTop: 0, // No gap - starts immediately after stripe
+    paddingBottom: 24, // Match condensed view padding
+  },
+  cardExpanded: {
+    marginHorizontal: 0,
+    marginVertical: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    borderRadius: 0,
+    flex: 1,
+    paddingTop: 0, // No padding - content starts right at top
+    paddingBottom: 0, // No padding - extends to bottom
+    paddingHorizontal: 0, // Edge-to-edge - no horizontal padding
+    backgroundColor: 'transparent', // Transparent to show MainView background
+    overflow: 'visible', // Allow background to show when overscrolling
   },
 });
 

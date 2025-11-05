@@ -55,17 +55,24 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 2.5,
     backgroundColor: colors.ink,
-    opacity: 0.25,
+    opacity: 0.2,
     borderWidth: 0,
     borderColor: 'transparent',
   },
   dotActive: {
-    opacity: 1,
+    opacity: 0.9,
     width: 6,
     height: 6,
     borderRadius: 3,
     borderWidth: 0,
     borderColor: 'transparent',
+    backgroundColor: colors.accent,
+    // Subtle shadow for modern depth
+    shadowColor: colors.accent,
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
 });
 

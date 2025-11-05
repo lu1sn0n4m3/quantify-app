@@ -12,8 +12,9 @@
  * - Centered "QuantiFy" branding
  * - Consistent neobrutalist styling
  */
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Svg, { Defs, Pattern, Rect, Circle, LinearGradient, Stop } from 'react-native-svg';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
 import { NeoSidebarButton } from '../base/NeoSidebarButton';
@@ -32,9 +33,28 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ onClose }) => {
   // Find dashboard name from route
   const dashboard = dashboardsConfig.dashboards.find(d => d.id === route.name);
   const title = dashboard ? dashboard.name : 'QuantiFy';
+  
+  // Generate unique ID for SVG patterns to avoid conflicts
+  const headerId = useRef(Math.random().toString(36).substring(2, 11)).current;
 
   return (
-    <>
+    <View style={styles.headerContainer}>
+      {/* Modern Gradient Background - Darker edges, lighter center */}
+      <View style={styles.gradientOverlay} pointerEvents="none">
+        <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id={`headerGradient-${headerId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#E8F4F8" stopOpacity="0.18" />
+              <Stop offset="25%" stopColor="#F0F8FA" stopOpacity="0.12" />
+              <Stop offset="50%" stopColor="#F8FCFD" stopOpacity="0.08" />
+              <Stop offset="75%" stopColor="#F0F8FA" stopOpacity="0.12" />
+              <Stop offset="100%" stopColor="#E8F4F8" stopOpacity="0.18" />
+            </LinearGradient>
+          </Defs>
+          <Rect width="100%" height="100%" fill={`url(#headerGradient-${headerId})`} />
+        </Svg>
+      </View>
+      
       <View style={styles.header}>
         {onClose ? (
           // Close button for expanded/modal views
@@ -45,23 +65,20 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ onClose }) => {
           // Sidebar button for normal views
           <NeoSidebarButton onPress={() => navigation.dispatch(DrawerActions.openDrawer())} />
         )}
-        <Text style={styles.headerTitle}>{title}</Text>
+        <Text style={styles.headerTitle} pointerEvents="none">{title}</Text>
         <View style={styles.placeholder} />
       </View>
-      <View style={styles.divider} />
-    </>
+      
+      {/* Header Stripe Separator */}
+      <View style={styles.headerStripe} pointerEvents="none" />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.ink,
+  headerContainer: {
+    position: 'relative',
+    overflow: 'hidden',
     backgroundColor: colors.screenBg,
     shadowColor: colors.shadow,
     shadowOpacity: 0.04,
@@ -69,11 +86,40 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    backgroundColor: 'transparent',
+    position: 'relative',
+    zIndex: 1,
+  },
+  headerStripe: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: '#E5E5E5',
+    zIndex: 100, // Very high z-index to ensure it's on top
+  },
   headerTitle: {
     ...typography.heading,
     fontSize: 22,
     color: colors.ink,
-    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
     textAlign: 'center',
     letterSpacing: -0.4,
     fontWeight: '500',
@@ -81,11 +127,6 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 44,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.ink,
-    opacity: 0.9,
   },
   closeButton: {
     width: 44,

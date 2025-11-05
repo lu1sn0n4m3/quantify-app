@@ -63,23 +63,17 @@ function CustomDrawerContent(props: any) {
           onPress={() => props.navigation.navigate('Home')}
           labelStyle={[
             styles.drawerItemLabel,
-            props.state.routes[props.state.index].name === 'Home' && {
-              fontWeight: '600',
-              color: colors.ink,
-            }
+            props.state.routes[props.state.index].name === 'Home' 
+              ? styles.drawerItemLabelActive
+              : styles.drawerItemLabelInactive
           ]}
           style={[
             styles.drawerItem,
-            props.state.routes[props.state.index].name === 'Home' && {
-              backgroundColor: colors.surface,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: colors.borderLight,
-            }
+            props.state.routes[props.state.index].name === 'Home' && styles.drawerItemActive
           ]}
           activeBackgroundColor={colors.surface}
           activeTintColor={colors.ink}
-          inactiveTintColor={colors.ink}
+          inactiveTintColor={colors.inkMuted}
           focused={props.state.routes[props.state.index].name === 'Home'}
         />
 
@@ -109,20 +103,12 @@ function CustomDrawerContent(props: any) {
               onPress={() => props.navigation.navigate(dashboard.id)}
               labelStyle={[
                 styles.dashboardItemLabel,
-                isFocused && {
-                  fontWeight: '600',
-                  color: colors.ink,
-                }
+                isFocused ? styles.dashboardItemLabelActive : styles.dashboardItemLabelInactive
               ]}
               style={[
                 styles.dashboardItem,
                 isLast && styles.dashboardItemLast,
-                isFocused && {
-                  backgroundColor: colors.surface,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.borderLight,
-                }
+                isFocused && styles.dashboardItemActive
               ]}
               activeTintColor={colors.ink}
               inactiveTintColor={colors.inkMuted}
@@ -138,23 +124,17 @@ function CustomDrawerContent(props: any) {
           onPress={() => props.navigation.navigate('Chat')}
           labelStyle={[
             styles.drawerItemLabel,
-            props.state.routes[props.state.index].name === 'Chat' && {
-              fontWeight: '600',
-              color: colors.ink,
-            }
+            props.state.routes[props.state.index].name === 'Chat' 
+              ? styles.drawerItemLabelActive
+              : styles.drawerItemLabelInactive
           ]}
           style={[
             styles.drawerItem,
-            props.state.routes[props.state.index].name === 'Chat' && {
-              backgroundColor: colors.surface,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: colors.borderLight,
-            }
+            props.state.routes[props.state.index].name === 'Chat' && styles.drawerItemActive
           ]}
           activeBackgroundColor={colors.surface}
           activeTintColor={colors.ink}
-          inactiveTintColor={colors.ink}
+          inactiveTintColor={colors.inkMuted}
           focused={props.state.routes[props.state.index].name === 'Chat'}
         />
       </DrawerContentScrollView>
@@ -222,11 +202,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.screenBg,
   },
   drawer: {
-    flex: 0,
+    flex: 1,
     backgroundColor: colors.screenBg,
   },
   drawerContent: {
     paddingTop: 70,
+    paddingBottom: 100, // Add padding to account for absolutely positioned sign out button
+    flexGrow: 1,
   },
   drawerHeader: {
     paddingHorizontal: 20,
@@ -262,7 +244,14 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(10, 10, 10, 0.15)',
+    borderLeftWidth: 0,
     minHeight: 22,
+  },
+  drawerItemActive: {
+    backgroundColor: colors.surface,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    paddingLeft: 17, // Adjust to account for border
   },
   drawerItemRow: {
     flexDirection: 'row',
@@ -283,9 +272,15 @@ const styles = StyleSheet.create({
     marginLeft: 0,
     marginVertical: 0,
     paddingVertical: 0,
-    color: colors.ink,
-    fontWeight: '500',
     letterSpacing: 0.1,
+  },
+  drawerItemLabelActive: {
+    color: colors.ink,
+    fontWeight: '600',
+  },
+  drawerItemLabelInactive: {
+    color: colors.inkMuted,
+    fontWeight: '400',
   },
   drawerItemNoBorder: {
     borderBottomWidth: 0,
@@ -302,7 +297,14 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(10, 10, 10, 0.15)',
+    borderLeftWidth: 0,
     minHeight: 21,
+  },
+  dashboardItemActive: {
+    backgroundColor: colors.surface,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    paddingLeft: 37, // Adjust to account for border
   },
   dashboardItemLast: {
     borderBottomWidth: 1,
@@ -317,17 +319,26 @@ const styles = StyleSheet.create({
     marginLeft: 0,
     marginVertical: 0,
     paddingVertical: 0,
+    letterSpacing: 0.1,
+  },
+  dashboardItemLabelActive: {
+    color: colors.ink,
+    fontWeight: '600',
+  },
+  dashboardItemLabelInactive: {
     color: colors.inkMuted,
     fontWeight: '400',
-    letterSpacing: 0.1,
   },
   signOutContainer: {
     paddingHorizontal: 20,
-    paddingTop: 5,
-    paddingBottom: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.ink,
-    opacity: 0.15,
-    marginTop: 'auto',
+    borderTopColor: 'rgba(10, 10, 10, 0.15)',
+    position: 'absolute',
+    bottom: 20, // Position from bottom with offset to move it higher
+    left: 0,
+    right: 0,
+    backgroundColor: colors.screenBg,
   },
 });
