@@ -42,6 +42,10 @@ function CustomDrawerContent(props: any) {
   console.log('Dashboards loaded:', dashboardsConfig.dashboards.length);
   console.log('Current route:', props.state.routes[props.state.index].name);
 
+  const toggleDashboards = () => {
+    setDashboardsExpanded(!dashboardsExpanded);
+  };
+
   return (
     <View style={styles.drawerContainer}>
       <DrawerContentScrollView 
@@ -52,32 +56,52 @@ function CustomDrawerContent(props: any) {
         <View style={styles.drawerHeader}>
           <Text style={styles.drawerTitle}>QuantiFy</Text>
         </View>
-        <View style={styles.divider} />
         
         {/* Home */}
         <DrawerItem
           label="Home"
           onPress={() => props.navigation.navigate('Home')}
-          labelStyle={styles.drawerItemLabel}
-          style={styles.drawerItem}
-          activeBackgroundColor={colors.screenBg}
+          labelStyle={[
+            styles.drawerItemLabel,
+            props.state.routes[props.state.index].name === 'Home' && {
+              fontWeight: '600',
+              color: colors.ink,
+            }
+          ]}
+          style={[
+            styles.drawerItem,
+            props.state.routes[props.state.index].name === 'Home' && {
+              backgroundColor: colors.surface,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.borderLight,
+            }
+          ]}
+          activeBackgroundColor={colors.surface}
           activeTintColor={colors.ink}
           inactiveTintColor={colors.ink}
           focused={props.state.routes[props.state.index].name === 'Home'}
         />
 
         {/* Dashboards Section (Collapsible) */}
-        <TouchableOpacity 
-          style={styles.sectionHeader}
-          onPress={() => setDashboardsExpanded(!dashboardsExpanded)}
-        >
-          <Text style={styles.sectionHeaderText}>
-            {dashboardsExpanded ? '▼' : '▶'} Dashboards
-          </Text>
-        </TouchableOpacity>
+        <DrawerItem
+          label={() => (
+            <View style={styles.drawerItemRow}>
+              <Text style={styles.drawerItemLabel}>Dashboards</Text>
+              <Text style={styles.arrow}>{dashboardsExpanded ? '▼' : '▶'}</Text>
+            </View>
+          )}
+          onPress={toggleDashboards}
+          labelStyle={styles.drawerItemLabel}
+          style={styles.drawerItem}
+          activeBackgroundColor={colors.surface}
+          activeTintColor={colors.ink}
+          inactiveTintColor={colors.ink}
+        />
 
-        {dashboardsExpanded && dashboardsConfig.dashboards.map((dashboard) => {
+        {dashboardsExpanded && dashboardsConfig.dashboards.map((dashboard, index) => {
           const isFocused = props.state.routes[props.state.index].name === dashboard.id;
+          const isLast = index === dashboardsConfig.dashboards.length - 1;
           return (
             <DrawerItem
               key={dashboard.id}
@@ -85,12 +109,25 @@ function CustomDrawerContent(props: any) {
               onPress={() => props.navigation.navigate(dashboard.id)}
               labelStyle={[
                 styles.dashboardItemLabel,
-                isFocused && { ...typography.heading, fontSize: 15, color: colors.pastelLilac }
+                isFocused && {
+                  fontWeight: '600',
+                  color: colors.ink,
+                }
               ]}
-              style={styles.dashboardItem}
+              style={[
+                styles.dashboardItem,
+                isLast && styles.dashboardItemLast,
+                isFocused && {
+                  backgroundColor: colors.surface,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: colors.borderLight,
+                }
+              ]}
               activeTintColor={colors.ink}
-              inactiveTintColor={colors.ink}
+              inactiveTintColor={colors.inkMuted}
               focused={false}
+              pressColor={colors.surface}
             />
           );
         })}
@@ -99,9 +136,23 @@ function CustomDrawerContent(props: any) {
         <DrawerItem
           label="Chat"
           onPress={() => props.navigation.navigate('Chat')}
-          labelStyle={styles.drawerItemLabel}
-          style={styles.drawerItem}
-          activeBackgroundColor={colors.screenBg}
+          labelStyle={[
+            styles.drawerItemLabel,
+            props.state.routes[props.state.index].name === 'Chat' && {
+              fontWeight: '600',
+              color: colors.ink,
+            }
+          ]}
+          style={[
+            styles.drawerItem,
+            props.state.routes[props.state.index].name === 'Chat' && {
+              backgroundColor: colors.surface,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.borderLight,
+            }
+          ]}
+          activeBackgroundColor={colors.surface}
           activeTintColor={colors.ink}
           inactiveTintColor={colors.ink}
           focused={props.state.routes[props.state.index].name === 'Chat'}
@@ -128,9 +179,10 @@ export function AppNavigator() {
         screenOptions={{
           headerShown: false,
           drawerStyle: {
-            backgroundColor: colors.cardBg,
-            width: 280,
+            backgroundColor: colors.screenBg,
+            width: 300,
           },
+          overlayColor: 'rgba(0, 0, 0, 0.5)',
         }}
       >
         <Drawer.Screen 
@@ -167,75 +219,115 @@ export function AppNavigator() {
 const styles = StyleSheet.create({
   drawerContainer: {
     flex: 1,
-    backgroundColor: colors.cardBg,
+    backgroundColor: colors.screenBg,
   },
   drawer: {
-    flex:0,
-    backgroundColor: colors.cardBg,
+    flex: 0,
+    backgroundColor: colors.screenBg,
   },
   drawerContent: {
-    paddingTop: 50,
+    paddingTop: 70,
   },
   drawerHeader: {
-    padding: 18,
-    borderBottomWidth: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 1,
+    paddingBottom: 2,
+    borderBottomWidth: 1,
     borderBottomColor: colors.ink,
-    marginBottom: 8,
+    marginBottom: 24,
   },
   drawerTitle: {
     ...typography.heading,
-    fontSize: 22,
+    fontSize: 20,
     color: colors.ink,
+    fontWeight: '500',
+    letterSpacing: -0.5,
   },
   divider: {
-    height: 4,
+    height: 1,
     backgroundColor: colors.ink,
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    marginTop: 8,
-  },
-  sectionHeaderText: {
-    ...typography.heading,
-    fontSize: 14,
-    color: colors.ink,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    opacity: 0.15,
+    marginVertical: 8,
+    marginHorizontal:10,
   },
   drawerItem: {
-    backgroundColor: colors.cardBg,
-    borderRadius: 8,
-    marginHorizontal: 12,
-    marginVertical: 4,
-    paddingLeft: 12,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    marginHorizontal: 20,
+    marginVertical: 0,
+    paddingLeft: 20,
+    paddingTop: 2,
+    paddingBottom: 2,
+    paddingRight: 5,
+    marginBottom: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(10, 10, 10, 0.15)',
+    minHeight: 22,
+  },
+  drawerItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  arrow: {
+    fontSize: 12,
+    color: colors.inkMuted,
+    marginLeft: 12,
+    fontWeight: '300',
   },
   drawerItemLabel: {
-    ...typography.value,
+    ...typography.body,
     fontSize: 16,
-    marginLeft: -16,
+    lineHeight: 18,
+    marginLeft: 0,
+    marginVertical: 0,
+    paddingVertical: 0,
     color: colors.ink,
+    fontWeight: '500',
+    letterSpacing: 0.1,
+  },
+  drawerItemNoBorder: {
+    borderBottomWidth: 0,
   },
   dashboardItem: {
-    backgroundColor: colors.cardBg,
-    borderRadius: 8,
-    marginHorizontal: 12,
-    marginVertical: 2,
-    paddingLeft: 24,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    marginHorizontal: 20,
+    marginVertical: 0,
+    paddingLeft: 40,
+    paddingTop: 2,
+    paddingBottom: 2,
+    paddingRight: 5,
+    marginBottom: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(10, 10, 10, 0.15)',
+    minHeight: 21,
+  },
+  dashboardItemLast: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(10, 10, 10, 0.15)',
+    paddingBottom: 2,
+    marginBottom: 0,
   },
   dashboardItemLabel: {
-    ...typography.bodyLarge,
+    ...typography.body,
     fontSize: 15,
-    fontWeight: '600',
-    marginLeft: -16,
-    color: colors.ink,
+    lineHeight: 17,
+    marginLeft: 0,
+    marginVertical: 0,
+    paddingVertical: 0,
+    color: colors.inkMuted,
+    fontWeight: '400',
+    letterSpacing: 0.1,
   },
   signOutContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 30,
-    borderTopWidth: 2,
+    paddingTop: 5,
+    paddingBottom: 20,
+    borderTopWidth: 1,
     borderTopColor: colors.ink,
+    opacity: 0.15,
+    marginTop: 'auto',
   },
 });

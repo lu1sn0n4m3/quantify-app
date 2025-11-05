@@ -63,30 +63,46 @@
 // };
 
 // ============================================
-// NEO-BRUTALIST "ONYX / PAPER" (Professional)
+// MODERN NEO-BRUTALIST "ONYX / PAPER" (Premium)
 // ============================================
 export const colors = {
-  // Foundations
-  screenBg:  '#F5F5F4', // paper-warm, not pure white
+  // Foundations - Refined with subtle warmth
+  screenBg:  '#FAFAF9', // warmer paper with slight beige tint
   cardBg:    '#FFFFFF',
-  ink:       '#0B0B0B', // nearly-black, crisp on light
-  inkMuted:  '#4B5563', // subdued body/captions
-  border:    '#0B0B0B', // bold outlines for brutalist feel
-  shadow:    '#0B0B0B', // use low blur + offset, not opacity soup
+  cardBgElevated: '#FEFEFE', // subtle tint for depth
+  ink:       '#0A0A0A', // deeper black for premium feel
+  inkMuted:  '#525252', // refined muted for better hierarchy
+  inkLight:  '#737373', // lighter text for tertiary info
+  border:    '#0A0A0A', // bold outlines for brutalist feel
+  borderLight: '#E5E5E5', // subtle borders for depth
+  shadow:    '#0A0A0A', // primary shadow color
+  shadowSecondary: '#1F1F1F', // secondary shadow layer
   white:     '#FFFFFF',
 
-  // Brand neutrals (primary interaction states stay neutral)
-  primary:   '#111111', // buttons/links default: black-on-paper
-  secondary: '#1F2937', // hover/pressed/dark text on light chips
+  // Brand neutrals (refined for premium feel)
+  primary:   '#0A0A0A', // buttons/links default: black-on-paper
+  secondary: '#1A1A1A', // hover/pressed states
+  tertiary:  '#2A2A2A', // subtle highlights
 
-  // Semantics (serious, not candy)
-  success:   '#16A34A',
+  // Semantics (refined colors)
+  success:   '#15803D', // deeper, more professional green
+  successLight: '#16A34A', // brighter for highlights
   warning:   '#DC2626',
+  warningLight: '#EF4444', // brighter for highlights
 
-  // Pastel tertiary accents (for tags, badges, empty-state art)
-  pastelBlue:   '#A7C7E7',
-  pastelMint:   '#BEE6D3',
-  pastelLilac:  '#D9C8FF',
-  pastelBlush:  '#F7C5CC',
-  pastelMaize:  '#F6E7A1',
+  // Accent colors (subtle but modern)
+  accent:    '#6366F1', // subtle indigo for premium feel
+  accentLight: '#818CF8',
+  
+  // Pastel tertiary accents (refined for modern use)
+  pastelBlue:   '#DBEAFE',
+  pastelMint:   '#D1FAE5',
+  pastelLilac:  '#E9D5FF',
+  pastelBlush:  '#FCE7F3',
+  pastelMaize:  '#FEF3C7',
+  
+  // Surface colors for depth
+  surface:   '#F9FAFB',
+  surfaceElevated: '#FFFFFF',
+  overlay:   'rgba(0, 0, 0, 0.4)', // for blur overlays
 };

@@ -54,8 +54,10 @@ const renderCondensedPages = (data: TotalBalanceCardPayload): React.ReactElement
         <Path 
           d={generateChartPath()} 
           stroke={colors.ink} 
-          strokeWidth={3} 
+          strokeWidth={1.5} 
           fill="none" 
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </Svg>
     </View>
@@ -84,7 +86,7 @@ const renderExpandedView = (data: TotalBalanceCardPayload): React.ReactElement =
         <>
           <View style={styles.divider} />
           <View style={styles.expandedSection}>
-            <Text style={styles.summary}>{data.summary}</Text>
+            {data.summary && <Text style={styles.summary}>{data.summary}</Text>}
             <Text style={styles.expandedText}>
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor eget massa viverra convallis. Integer ac lacinia nisl. Nulla facilisi. Cras imperdiet nunc a nibh tristique, vitae tempus magna consequat. Morbi id gravida nibh. Aliquam erat volutpat.
             </Text>
@@ -124,44 +126,51 @@ export const TotalBalanceCard: React.FC<WidgetProps<TotalBalanceCardPayload>> = 
 const styles = StyleSheet.create({
   pageInner: {
     width: '100%',
-    paddingHorizontal: 14,
+    paddingHorizontal: 0,
   },
   value: { 
-    ...typography.valueLarge,
+    ...typography.valueXXLarge,
     color: colors.ink,
-    marginBottom: 8,
+    marginBottom: 24,
+    letterSpacing: -0.8,
   },
   chart: { 
-    height: 120, 
+    height: 140, 
     width: '100%',
+    marginTop: 8,
   },
   chartExpanded: {
-    marginBottom: 12,
+    marginBottom: 24,
+    marginTop: 16,
   },
   expandedContent: {
     // Expanded view layout
   },
   expandedSection: {
     width: '100%',
-  },
-  divider: {
-    height: 2,
-    backgroundColor: colors.ink,
-    marginVertical: 16,
-    opacity: 0.3,
-    marginHorizontal: 14,
-    alignSelf: 'stretch',
+    paddingTop: 8,
   },
   summary: {
     ...typography.body,
-    color: colors.ink,
-    marginBottom: 12,
+    color: colors.inkMuted,
+    marginBottom: 16,
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   expandedText: {
     ...typography.body,
-    color: colors.ink,
-    lineHeight: 20,
-    marginBottom: 12,
+    color: colors.inkMuted,
+    lineHeight: 24,
+    marginBottom: 16,
+    letterSpacing: 0.1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.ink,
+    marginVertical: 32,
+    opacity: 0.15,
+    marginHorizontal: 0,
+    alignSelf: 'stretch',
   },
 });

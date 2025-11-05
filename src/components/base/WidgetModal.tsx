@@ -18,26 +18,26 @@ type WidgetModalProps = {
 };
 
 export const WidgetModal: React.FC<WidgetModalProps> = ({ visible, onClose, children }) => {
-  const slideAnim = useRef(new Animated.Value(300)).current;
+  const scaleYAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const blurAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      slideAnim.setValue(300);
+      scaleYAnim.setValue(0);
       opacityAnim.setValue(0);
       blurAnim.setValue(0);
       
       Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
+        Animated.spring(scaleYAnim, {
+          toValue: 1,
           useNativeDriver: true,
           tension: 80,
-          friction: 9,
+          friction: 8,
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 200,
+          duration: 180,
           useNativeDriver: true,
         }),
         Animated.timing(blurAnim, {
@@ -47,7 +47,7 @@ export const WidgetModal: React.FC<WidgetModalProps> = ({ visible, onClose, chil
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, scaleYAnim, opacityAnim, blurAnim]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -77,7 +77,7 @@ export const WidgetModal: React.FC<WidgetModalProps> = ({ visible, onClose, chil
         style={[
           styles.content,
           { 
-            transform: [{ translateY: slideAnim }],
+            transform: [{ scaleY: scaleYAnim }],
             opacity: opacityAnim,
           }
         ]}
@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1001,
     backgroundColor: colors.screenBg,
+    transformOrigin: 'top center',
   },
   safeArea: {
     flex: 1,

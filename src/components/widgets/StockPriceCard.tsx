@@ -223,8 +223,10 @@ const renderPricePage = (data: StockPriceCardPayload): React.ReactElement => {
         <Svg viewBox="0 0 300 120" style={styles.chart}>
           <Path 
             d={chartPath} 
-            stroke={priceInfo.isPositive ? '#16a34a' : '#dc2626'} 
-            strokeWidth={3} 
+            stroke={priceInfo.isPositive ? colors.successLight : colors.warning} 
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round" 
             fill="none" 
           />
         </Svg>
@@ -327,24 +329,26 @@ const renderExpandedView = (data: StockPriceCardPayload): React.ReactElement => 
                 key={`grid-${index}`}
                 d={`M ${line.x1} ${line.y1} L ${line.x2} ${line.y2}`}
                 stroke={colors.ink}
-                strokeWidth="0.3"
-                strokeOpacity="0.2"
-                strokeDasharray="1,1"
+                strokeWidth="0.5"
+                strokeOpacity="0.12"
+                strokeDasharray="2,3"
               />
             ))}
             
             {/* Area fill under the line */}
             <Path
               d={`${chartData.path} L ${chartData.width - 5} ${chartData.height - 15} L ${12} ${chartData.height - 15} Z`}
-              fill={priceInfo.isPositive ? '#16a34a' : '#dc2626'}
-              fillOpacity="0.1"
+              fill={priceInfo.isPositive ? colors.successLight : colors.warning}
+              fillOpacity="0.08"
             />
             
             {/* Price line */}
             <Path
               d={chartData.path}
-              stroke={priceInfo.isPositive ? '#16a34a' : '#dc2626'}
-              strokeWidth="0.8"
+              stroke={priceInfo.isPositive ? colors.successLight : colors.warning}
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               fill="none"
             />
             
@@ -362,7 +366,7 @@ const renderExpandedView = (data: StockPriceCardPayload): React.ReactElement => 
                   y={y - 0.5}
                   width="1"
                   height="1"
-                  fill={priceInfo.isPositive ? '#16a34a' : '#dc2626'}
+                  fill={priceInfo.isPositive ? colors.successLight : colors.warning}
                 />
               );
             })}
@@ -461,13 +465,13 @@ export const StockPriceCard: React.FC<WidgetProps<StockPriceCardPayload>> = ({
 const styles = StyleSheet.create({
   pageInner: {
     width: '100%',
-    paddingHorizontal: 14,
+    paddingHorizontal: 0,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 8,
-    gap: 12,
+    marginBottom: 20,
+    gap: 16,
   },
   price: { 
     ...typography.valueXLarge,
@@ -477,10 +481,10 @@ const styles = StyleSheet.create({
     ...typography.change,
   },
   positive: {
-    color: '#16a34a',
+    color: colors.successLight,
   },
   negative: {
-    color: '#dc2626',
+    color: colors.warning,
   },
   chartArea: {
     width: '100%',
@@ -497,7 +501,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.heading,
     color: colors.ink,
-    marginBottom: 12,
+    marginBottom: 20,
+    fontSize: 18,
+    letterSpacing: -0.4,
   },
   ratiosGrid: {
     flexDirection: 'row',
@@ -510,21 +516,27 @@ const styles = StyleSheet.create({
   },
   ratioItem: {
     width: '47%',
-    backgroundColor: colors.screenBg,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   ratioLabel: {
-    ...typography.label,
-    color: colors.ink,
-    opacity: 0.7,
-    marginBottom: 4,
+    ...typography.metricLabel,
+    color: colors.inkMuted,
+    marginBottom: 8,
+    opacity: 1,
   },
   ratioValue: {
     ...typography.value,
     color: colors.ink,
+    letterSpacing: -0.3,
   },
   summaryContainerCondensed: {
     alignSelf: 'center',
@@ -533,23 +545,26 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     ...typography.body,
-    color: colors.ink,
-    lineHeight: 20,
-    marginBottom: 12,
+    color: colors.inkMuted,
+    lineHeight: 24,
+    marginBottom: 16,
+    letterSpacing: 0.1,
   },
   expandedContent: {
     // Expanded view layout
   },
   expandedSection: {
     width: '100%',
+    paddingTop: 8,
   },
   expandedHeader: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
   expandedPrice: {
     ...typography.headingLarge,
     color: colors.ink,
-    marginBottom: 4,
+    marginBottom: 8,
+    letterSpacing: -0.6,
   },
   expandedChange: {
     ...typography.change,
@@ -557,12 +572,17 @@ const styles = StyleSheet.create({
   detailedChartContainer: {
     width: '100%',
     alignItems: 'center',
-    marginVertical: 16,
-    backgroundColor: colors.screenBg,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    marginVertical: 24,
+    backgroundColor: colors.surface,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   detailedChart: {
     width: '100%',
@@ -578,21 +598,27 @@ const styles = StyleSheet.create({
   metricItem: {
     flex: 1,
     minWidth: '47%',
-    backgroundColor: colors.screenBg,
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   metricLabel: {
     ...typography.metricLabel,
-    color: colors.ink,
-    opacity: 0.7,
-    marginBottom: 4,
+    color: colors.inkMuted,
+    marginBottom: 8,
+    opacity: 1,
   },
   metricValue: {
     ...typography.metricValue,
     color: colors.ink,
+    letterSpacing: -0.3,
   },
   expandedRatiosGrid: {
     flexDirection: 'row',
@@ -601,18 +627,23 @@ const styles = StyleSheet.create({
   },
   expandedRatioItem: {
     width: '47%',
-    backgroundColor: colors.screenBg,
-    padding: 14,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    padding: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   divider: {
-    height: 2,
+    height: 1,
     backgroundColor: colors.ink,
-    marginVertical: 16,
-    opacity: 0.3,
-    marginHorizontal: 14,
+    marginVertical: 32,
+    opacity: 0.15,
+    marginHorizontal: 0,
     alignSelf: 'stretch',
   },
 });

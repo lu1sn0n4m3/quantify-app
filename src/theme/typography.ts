@@ -20,7 +20,7 @@ export const typography = {
     heavy: 'Helvetica-Bold',
   },
 
-  // Font sizes
+  // Font sizes (refined for better hierarchy)
   sizes: {
     xs: 10,
     sm: 12,
@@ -30,6 +30,7 @@ export const typography = {
     xl: 24,
     xxl: 28,
     xxxl: 32,
+    display: 36,
   },
 
   // Font weights
@@ -41,95 +42,127 @@ export const typography = {
     heavy: '800' as const,
   },
 
-  // Predefined text styles for common use cases
+  // Predefined text styles for common use cases (with improved spacing)
   heading: {
     fontSize: 18,
-    fontWeight: '800' as const,
+    fontWeight: '700' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.3,
+    lineHeight: 24,
   },
 
   headingLarge: {
     fontSize: 32,
     fontWeight: '800' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.5,
+    lineHeight: 40,
   },
 
   headingMedium: {
     fontSize: 28,
     fontWeight: '800' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.4,
+    lineHeight: 36,
   },
 
   headingSmall: {
     fontSize: 24,
-    fontWeight: '800' as const,
+    fontWeight: '700' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.3,
+    lineHeight: 32,
   },
 
   body: {
     fontSize: 14,
     fontWeight: '400' as const,
     fontFamily: 'Helvetica',
+    lineHeight: 22,
+    letterSpacing: 0.1,
   },
 
   bodySmall: {
     fontSize: 12,
     fontWeight: '400' as const,
     fontFamily: 'Helvetica',
+    lineHeight: 18,
+    letterSpacing: 0.1,
   },
 
   bodyLarge: {
     fontSize: 16,
     fontWeight: '400' as const,
     fontFamily: 'Helvetica',
+    lineHeight: 24,
+    letterSpacing: 0.1,
   },
 
   label: {
     fontSize: 12,
     fontWeight: '600' as const,
     fontFamily: 'Helvetica',
+    letterSpacing: 0.2,
+    lineHeight: 16,
+    textTransform: 'uppercase' as const,
   },
 
   value: {
     fontSize: 16,
     fontWeight: '800' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.2,
+    lineHeight: 22,
   },
 
   valueLarge: {
     fontSize: 24,
     fontWeight: '800' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.3,
+    lineHeight: 32,
   },
 
   valueXLarge: {
     fontSize: 28,
     fontWeight: '800' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.4,
+    lineHeight: 36,
   },
 
   valueXXLarge: {
     fontSize: 32,
     fontWeight: '800' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.5,
+    lineHeight: 40,
   },
 
   change: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.2,
+    lineHeight: 22,
   },
 
   metricLabel: {
     fontSize: 11,
     fontWeight: '600' as const,
     fontFamily: 'Helvetica',
+    letterSpacing: 0.3,
+    lineHeight: 14,
+    textTransform: 'uppercase' as const,
   },
 
   metricValue: {
     fontSize: 16,
     fontWeight: '800' as const,
     fontFamily: 'Helvetica-Bold',
+    letterSpacing: -0.2,
+    lineHeight: 22,
   },
 };
 

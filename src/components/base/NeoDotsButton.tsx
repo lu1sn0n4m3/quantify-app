@@ -10,18 +10,18 @@
  * Props:
  * - onPress: Callback function executed when the button is pressed
  * - size: Size of each dot (default: 4)
- * - horizontal: Boolean to display dots horizontally (true) or vertically (false)
+ * - expanded: Boolean to rotate dots 90 degrees when expanded
  * - style: Additional styles to apply to the button
  * - testID: Test identifier for automated testing
  */
 import React from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet, Animated } from 'react-native';
 import { colors } from '../../theme/colors';
 
 type Props = { 
   onPress?: () => void; 
   size?: number; 
-  horizontal?: boolean; 
+  expanded?: boolean;
   style?: any; 
   testID?: string;
 };
@@ -29,10 +29,32 @@ type Props = {
 export const NeoDotsButton: React.FC<Props> = ({ 
   onPress, 
   size = 4, 
-  horizontal = true, 
+  expanded = false,
   style, 
   testID 
 }) => {
+  const rotation = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(rotation, {
+      toValue: expanded ? 90 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [expanded]);
+
+  const rotateStyle = {
+    transform: [{ rotate: rotation.interpolate({
+      inputRange: [0, 90],
+      outputRange: ['0deg', '90deg']
+    })}]
+  };
+
+  // Calculate container size to accommodate both horizontal and vertical orientations
+  // Horizontal: 3 dots + 2 gaps = 3*size + 2*4
+  // Vertical: same height as horizontal width
+  const containerSize = size * 3 + 8; // 3 dots + 2 gaps (4px each)
+
   return (
     <Pressable 
       onPress={onPress} 
@@ -40,18 +62,20 @@ export const NeoDotsButton: React.FC<Props> = ({
       testID={testID}
       style={[styles.button, style]}
     >
-      <View style={{ flexDirection: horizontal ? 'row' : 'column', gap: 4 }}>
-        {[0, 1, 2].map(i => (
-          <View 
-            key={i} 
-            style={{ 
-              width: size, 
-              height: size, 
-              borderRadius: size / 2, 
-              backgroundColor: colors.screenBg 
-            }} 
-          />
-        ))}
+      <View style={[styles.container, { width: containerSize, height: containerSize }]}>
+        <Animated.View style={[styles.dotsContainer, rotateStyle]}>
+          {[0, 1, 2].map(i => (
+            <View 
+              key={i} 
+              style={{ 
+                width: size, 
+                height: size, 
+                borderRadius: size / 2, 
+                backgroundColor: colors.ink 
+              }} 
+            />
+          ))}
+        </Animated.View>
       </View>
     </Pressable>
   );
@@ -59,10 +83,17 @@ export const NeoDotsButton: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.ink,
-    borderRadius: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
+    // No background, border, padding, or shadow - just the dots
+  },
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

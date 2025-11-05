@@ -42,7 +42,7 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const lastExpandedId = useRef<string | null>(null);
-  const slideAnim = useRef(new Animated.Value(300)).current;
+  const scaleYAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const blurAnim = useRef(new Animated.Value(0)).current;
 
@@ -53,19 +53,20 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
     if (expandedId) {
       lastExpandedId.current = expandedId;
       setModalVisible(true);
-      slideAnim.setValue(300);
+      scaleYAnim.setValue(0);
       opacityAnim.setValue(0);
       blurAnim.setValue(0);
+      
       Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
+        Animated.spring(scaleYAnim, {
+          toValue: 1,
           useNativeDriver: true,
           tension: 80,
-          friction: 9,
+          friction: 8,
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 200,
+          duration: 180,
           useNativeDriver: true,
         }),
         Animated.timing(blurAnim, {
@@ -76,11 +77,11 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
       ]).start();
     } else if (modalVisible) {
       Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 300,
+        Animated.spring(scaleYAnim, {
+          toValue: 0,
           useNativeDriver: true,
           tension: 80,
-          friction: 9,
+          friction: 8,
         }),
         Animated.timing(opacityAnim, {
           toValue: 0,
@@ -97,7 +98,7 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
         lastExpandedId.current = null;
       });
     }
-  }, [expandedId, slideAnim, opacityAnim, blurAnim, modalVisible]);
+  }, [expandedId, scaleYAnim, opacityAnim, blurAnim, modalVisible]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -193,7 +194,7 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
             style={[
               styles.expandedContentContainer,
               { 
-                transform: [{ translateY: slideAnim }],
+                transform: [{ scaleY: scaleYAnim }],
                 opacity: opacityAnim,
               }
             ]}
@@ -240,7 +241,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.screenBg,
   },
   mainContent: {
-    paddingTop: 90,
+    paddingTop: 75,
+    paddingBottom: 20,
   },
   expandedOverlay: {
     position: 'absolute',
@@ -258,6 +260,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1001,
     backgroundColor: colors.screenBg,
+    transformOrigin: 'top center',
   },
   expandedSafeArea: {
     flex: 1,
