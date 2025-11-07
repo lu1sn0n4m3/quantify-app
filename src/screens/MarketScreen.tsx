@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader, Dashboard } from '../components/layout/ScreenHeader';
-import { NeoCard } from '../components/base/NeoCard';
+import { NeoCard } from '../components/core';
 import { validateWidget } from '../components/widgets/widgetValidation';
 import dashboardsConfig from '../config/dashboards.json';
 import { colors } from '../theme/colors';

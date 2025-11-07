@@ -25,7 +25,7 @@ import { widgetConfig, getWidgetBuilder } from '../components/widgets/widgetRegi
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { colors } from '../theme/colors';
-import { NeoCard } from '../components/base/NeoCard';
+import { NeoCard } from '../components/core';
 
 export default function WidgetScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);

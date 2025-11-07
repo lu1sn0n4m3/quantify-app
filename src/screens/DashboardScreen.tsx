@@ -24,7 +24,7 @@ import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { colors } from '../theme/colors';
 import { validateWidget } from '../components/widgets/widgetValidation';
-import { NeoCard } from '../components/base/NeoCard';
+import { NeoCard } from '../components/core';
 import dashboardsConfig from '../config/dashboards.json';
 
 type DashboardScreenProps = {

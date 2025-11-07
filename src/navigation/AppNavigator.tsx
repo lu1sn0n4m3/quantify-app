@@ -27,13 +27,12 @@ import React, { useState } from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import { View, Text, StyleSheet } from 'react-native';
-import { SignOutButton } from '../components/base/SignOutButton';
+import { SignOutButton, BackgroundTexture } from '../components/core';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import DashboardScreen from '../screens/DashboardScreen';
 import dashboardsConfig from '../config/dashboards.json';
-import { BackgroundTexture } from '../components/base/BackgroundTexture';
 
 const Drawer = createDrawerNavigator();
 

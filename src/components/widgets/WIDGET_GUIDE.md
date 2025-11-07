@@ -350,7 +350,7 @@ Here's a complete example of a simple widget:
  */
 import React from 'react';
 import { Text, StyleSheet, View } from 'react-native';
-import { NeoCard } from '../base/NeoCard';
+import { NeoCard } from '../core';
 import { colors } from '../../theme/colors';
 import { WidgetProps } from './widgetRegistry';
 

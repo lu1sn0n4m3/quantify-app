@@ -16,8 +16,8 @@
 import React from 'react';
 import { useClerk } from '@clerk/clerk-expo';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
 
 export const SignOutButton = () => {
   // Use `useClerk()` to access the `signOut()` function

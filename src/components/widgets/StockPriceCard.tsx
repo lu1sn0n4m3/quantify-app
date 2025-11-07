@@ -40,7 +40,7 @@
 import React from 'react';
 import { Text, StyleSheet, View, ScrollView } from 'react-native';
 import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
-import { PriceChart } from '../base/PriceChart';
+import { PriceChart } from '../core';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import type { WidgetBuilder } from './widgetRegistry';

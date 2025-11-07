@@ -20,7 +20,7 @@ import React, { PropsWithChildren, useMemo } from 'react';
 import { ScrollView, StyleSheet, ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
-import { BackgroundTexture } from '../base/BackgroundTexture';
+import { BackgroundTexture } from '../core';
 
 type ScreenLayoutProps = {
   contentStyle?: ViewStyle;

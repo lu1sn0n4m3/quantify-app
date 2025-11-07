@@ -12,4 +12,6 @@ export { NeoSidebarButton } from './NeoSidebarButton';
 export { SignOutButton } from './SignOutButton';
 export { PriceChart } from './PriceChart';
 export type { PriceChartProps } from './PriceChart';
+export { BackgroundTexture } from './BackgroundTexture';
+export { WidgetModal } from './WidgetModal';
 

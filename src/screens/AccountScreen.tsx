@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
-import { SignOutButton } from '../components/base/SignOutButton';
+import { SignOutButton } from '../components/core';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 
