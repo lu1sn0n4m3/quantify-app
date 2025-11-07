@@ -22,6 +22,7 @@ import { BlurView } from 'expo-blur';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader, Dashboard } from '../components/layout/ScreenHeader';
 import { BackgroundTexture } from '../components/base/BackgroundTexture';
+import { NeoCard } from '../components/base/NeoCard';
 import { validateWidget } from '../components/widgets/widgetValidation';
 import dashboardsConfig from '../config/dashboards.json';
 import { colors } from '../theme/colors';
@@ -160,7 +161,6 @@ export default function MarketScreen() {
   const dropdownDashboards: Dashboard[] = dashboardsConfig.dashboards.map(d => ({
     id: d.id,
     name: d.name,
-    description: d.description,
   }));
 
   if (isLoading) {
@@ -201,15 +201,18 @@ export default function MarketScreen() {
         {/* Dynamically render all widgets from the selected dashboard */}
         {selectedDashboard.widgets.map((widget) => {
           const validation = validateWidget(widget, widget.id);
-          if (!validation.isValid || !validation.Component || !validation.data) {
+          if (!validation.isValid || !validation.builder || !validation.data) {
             return null;
           }
 
+          const definition = validation.builder(validation.data);
+
           return (
-            <validation.Component
+            <NeoCard
               key={widget.id}
-              id={widget.id}
-              data={validation.data}
+              title={definition.title}
+              condensedPages={definition.condensedPages}
+              expandedView={definition.expandedContent}
               onExpand={() => handleExpand(widget.id)}
               expanded={false}
             />
@@ -251,14 +254,17 @@ export default function MarketScreen() {
               <View style={styles.expandedContentWrapper}>
                 {displayWidget && (() => {
                   const validation = validateWidget(displayWidget, displayWidget.id);
-                  if (!validation.isValid || !validation.Component || !validation.data) {
+                  if (!validation.isValid || !validation.builder || !validation.data) {
                     return null;
                   }
 
+                  const definition = validation.builder(validation.data);
+
                   return (
-                    <validation.Component
-                      id={displayWidget.id}
-                      data={validation.data}
+                    <NeoCard
+                      title={definition.title}
+                      condensedPages={definition.condensedPages}
+                      expandedView={definition.expandedContent}
                       onExpand={() => handleExpand(displayWidget.id)}
                       expanded={true}
                     />

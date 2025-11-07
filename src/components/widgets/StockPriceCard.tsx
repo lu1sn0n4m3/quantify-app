@@ -40,11 +40,10 @@
 import React from 'react';
 import { Text, StyleSheet, View, ScrollView } from 'react-native';
 import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
-import { NeoCard } from '../base/NeoCard';
 import { PriceChart } from '../base/PriceChart';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
-import { WidgetProps } from './widgetRegistry';
+import type { WidgetBuilder } from './widgetRegistry';
 import { sharedWidgetStyles } from './sharedWidgetStyles';
 
 /**
@@ -298,32 +297,12 @@ const renderExpandedView = (data: StockPriceCardPayload): React.ReactElement => 
   );
 };
 
-/**
- * StockPriceCard Component
- */
-export const StockPriceCard: React.FC<WidgetProps<StockPriceCardPayload>> = ({ 
-  data,
-  onExpand, 
-  expanded = false,
-}) => {
-  const title = getTitle(data);
-  const condensedPages = renderCondensedPages(data);
-  const expandedViewContent = renderExpandedView(data);
-
-  return (
-    <>
-      <NeoCard
-        title={title}
-        onExpand={onExpand}
-        expanded={expanded}
-        condensedPages={expanded ? [] : condensedPages}
-        expandedView={expandedViewContent}
-      />
-      
-      {/* P/E Ratio Popup Modal (only in condensed view) */}
-      {/* Note: P/E ratio popup removed - historical P/E data not in payload */}
-    </>
-  );
+export const buildStockPriceCard: WidgetBuilder<StockPriceCardPayload> = (data) => {
+  return {
+    title: getTitle(data),
+    condensedPages: renderCondensedPages(data),
+    expandedContent: renderExpandedView(data),
+  };
 };
 
 const styles = StyleSheet.create({

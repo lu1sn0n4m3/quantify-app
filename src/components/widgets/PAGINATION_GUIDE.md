@@ -1,5 +1,7 @@
 # Widget Pagination Guide
 
+> ⚠️ **Legacy Content:** This guide references the earlier component-based API. For the current builder-based approach, see `src/components/widgets/README.md`. The material below remains for historical context and will be updated soon.
+
 This guide explains how to implement horizontal pagination in your widgets, allowing users to swipe through multiple "pages" of content without expanding the widget.
 
 ## Overview

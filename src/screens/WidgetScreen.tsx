@@ -20,15 +20,14 @@
  * All widgets automatically get the same animation and expansion behavior.
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { Animated, StyleSheet, Dimensions, ScrollView, BackHandler } from 'react-native';
+import { Animated, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { widgetConfig } from '../components/widgets/widgetRegistry';
+import { widgetConfig, getWidgetBuilder } from '../components/widgets/widgetRegistry';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { colors } from '../theme/colors';
-
-const { width } = Dimensions.get('window');
+import { NeoCard } from '../components/base/NeoCard';
 
 export default function WidgetScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -129,12 +128,20 @@ export default function WidgetScreen() {
       <ScreenLayout contentStyle={styles.mainContent}>
         {/* Dynamically render all widgets from the registry */}
         {widgetConfig.map((widget) => {
-          const WidgetComponent = widget.component;
+          const builder = getWidgetBuilder(widget.type);
+          if (!builder) {
+            console.warn(`Widget type "${widget.type}" not found in widgetConfig map.`);
+            return null;
+          }
+
+          const definition = builder(widget.data);
+
           return (
-            <WidgetComponent
+            <NeoCard
               key={widget.id}
-              id={widget.id}
-              data={widget.data}
+              title={definition.title}
+              condensedPages={definition.condensedPages}
+              expandedView={definition.expandedContent}
               onExpand={() => handleExpand(widget.id)}
               expanded={false}
             />
@@ -171,14 +178,25 @@ export default function WidgetScreen() {
                   style={styles.expandedScrollView}
                   contentContainerStyle={styles.expandedScrollContent}
                 >
-                  {displayWidget && (
-                    <displayWidget.component
-                      id={displayWidget.id}
-                      data={displayWidget.data}
-                      onExpand={() => handleExpand(displayWidget.id)}
-                      expanded={true}
-                    />
-                  )}
+                  {displayWidget && (() => {
+                    const builder = getWidgetBuilder(displayWidget.type);
+                    if (!builder) {
+                      console.warn(`Widget type "${displayWidget.type}" not found in widgetConfig map.`);
+                      return null;
+                    }
+
+                    const definition = builder(displayWidget.data);
+
+                    return (
+                      <NeoCard
+                        title={definition.title}
+                        condensedPages={definition.condensedPages}
+                        expandedView={definition.expandedContent}
+                        onExpand={() => handleExpand(displayWidget.id)}
+                        expanded={true}
+                      />
+                    );
+                  })()}
                 </ScrollView>
               </SafeAreaView>
             </Animated.View>

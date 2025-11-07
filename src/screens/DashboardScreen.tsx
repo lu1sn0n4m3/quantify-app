@@ -18,18 +18,16 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Animated, StyleSheet, Dimensions, ScrollView, BackHandler, View } from 'react-native';
+import { Animated, StyleSheet, BackHandler, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { BackgroundTexture } from '../components/base/BackgroundTexture';
 import { colors } from '../theme/colors';
-import { getWidgetComponent } from '../components/widgets/widgetComponentRegistry';
 import { validateWidget } from '../components/widgets/widgetValidation';
+import { NeoCard } from '../components/base/NeoCard';
 import dashboardsConfig from '../config/dashboards.json';
-
-const { width } = Dimensions.get('window');
 
 type DashboardScreenProps = {
   route?: {
@@ -48,7 +46,6 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
   const scaleYAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const blurAnim = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
   const headerRef = useRef<View>(null);
 
@@ -141,7 +138,6 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
 
   const widgetIdToDisplay = expandedId || lastExpandedId.current;
   const displayWidget = dashboard.widgets.find(w => w.id === widgetIdToDisplay);
-  const DisplayWidgetComponent = displayWidget ? getWidgetComponent(displayWidget.type) : null;
 
   return (
     <>
@@ -165,15 +161,18 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
         {/* Dynamically render all widgets from the dashboard config */}
         {dashboard.widgets.map((widget) => {
           const validation = validateWidget(widget, widget.id);
-          if (!validation.isValid || !validation.Component || !validation.data) {
+          if (!validation.isValid || !validation.builder || !validation.data) {
             return null;
           }
 
+          const definition = validation.builder(validation.data);
+
           return (
-            <validation.Component
+            <NeoCard
               key={widget.id}
-              id={widget.id}
-              data={validation.data}
+              title={definition.title}
+              condensedPages={definition.condensedPages}
+              expandedView={definition.expandedContent}
               onExpand={() => handleExpand(widget.id)}
               expanded={false}
             />
@@ -213,14 +212,17 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
               <View style={styles.expandedContentWrapper}>
                 {displayWidget && (() => {
                   const validation = validateWidget(displayWidget, displayWidget.id);
-                  if (!validation.isValid || !validation.Component || !validation.data) {
+                  if (!validation.isValid || !validation.builder || !validation.data) {
                     return null;
                   }
 
+                  const definition = validation.builder(validation.data);
+
                   return (
-                    <validation.Component
-                      id={displayWidget.id}
-                      data={validation.data}
+                    <NeoCard
+                      title={definition.title}
+                      condensedPages={definition.condensedPages}
+                      expandedView={definition.expandedContent}
                       onExpand={() => handleExpand(displayWidget.id)}
                       expanded={true}
                     />

@@ -24,110 +24,98 @@ Both views are controlled by the same component using the `expanded` prop.
 
 ## How to Add a New Widget
 
-### Step 1: Create Your Widget Component
+### Step 1: Create Your Widget Builder
 
 Create a new file in `src/components/widgets/` (e.g., `MyNewWidget.tsx`):
 
 ```tsx
 import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
-import { NeoCard } from '../base/NeoCard';
-import { colors } from '../../theme/colors';
-import { WidgetProps } from './widgetRegistry';
+import type { WidgetBuilder } from './widgetRegistry';
 
-// Use the standardized WidgetProps type
-export const MyNewWidget: React.FC<WidgetProps> = ({ 
-  id,
-  onExpand, 
-  expanded = false,
-  data, // Future: data from backend
-}) => {
-  return (
-    <NeoCard 
-      title="My New Widget" 
-      onExpand={onExpand}
-    >
-      {/* SMALL VERSION - Always visible */}
-      <Text style={styles.mainValue}>$42,000</Text>
-      <Text style={styles.subtitle}>+5.2% this month</Text>
-      
-      {/* EXPANDED VERSION - Only shows when expanded */}
-      {expanded && (
-        <View style={styles.expandedContent}>
-          <Text style={styles.sectionTitle}>Detailed Breakdown</Text>
-          <Text style={styles.detailText}>
-            Here you can add charts, more base components, 
-            interactive elements, detailed statistics, etc.
-          </Text>
-          
-          {/* Example: Add more components here */}
-          <View style={styles.statsGrid}>
-            <Text>Revenue: $30,000</Text>
-            <Text>Expenses: $12,000</Text>
-          </View>
-        </View>
-      )}
-    </NeoCard>
-  );
+type MyNewWidgetPayload = {
+  value: number;
+  changePercent: number;
+  breakdown: Record<string, number>;
 };
 
+const renderCondensedPages = (data: MyNewWidgetPayload) => [
+  <View key="summary" style={styles.compact}>
+    <Text style={styles.mainValue}>${data.value.toLocaleString()}</Text>
+    <Text style={styles.subtitle}>{data.changePercent.toFixed(2)}%</Text>
+  </View>,
+];
+
+const renderExpandedView = (data: MyNewWidgetPayload) => (
+  <View style={styles.expandedContent}>
+    <Text style={styles.sectionTitle}>Detailed Breakdown</Text>
+    {Object.entries(data.breakdown).map(([label, amount]) => (
+      <View key={label} style={styles.statsRow}>
+        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>${amount.toLocaleString()}</Text>
+      </View>
+    ))}
+  </View>
+);
+
+export const buildMyNewWidget: WidgetBuilder<MyNewWidgetPayload> = (data) => ({
+  title: 'My New Widget',
+  condensedPages: renderCondensedPages(data),
+  expandedContent: renderExpandedView(data),
+});
+
 const styles = StyleSheet.create({
+  compact: {
+    gap: 4,
+  },
   mainValue: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.ink,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.ink,
     opacity: 0.7,
-    marginTop: 4,
   },
   expandedContent: {
+    gap: 12,
     marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 2,
-    borderTopColor: colors.ink,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.ink,
-    marginBottom: 8,
   },
-  detailText: {
-    color: colors.ink,
-    lineHeight: 20,
-    marginBottom: 12,
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  statsGrid: {
-    marginTop: 8,
+  statLabel: {
+    opacity: 0.7,
+  },
+  statValue: {
+    fontWeight: '600',
   },
 });
 ```
 
-### Step 2: Export Your Widget
+### Step 2: Export Your Builder
 
 Add your widget to `src/components/widgets/index.ts`:
 
 ```tsx
-export { MyNewWidget } from './MyNewWidget';
+export { buildMyNewWidget } from './MyNewWidget';
 ```
 
-### Step 3: Register Your Widget
+### Step 3: Register Your Widget Builder
 
 Add your widget to `src/components/widgets/widgetRegistry.ts`:
 
 ```tsx
-import { MyNewWidget } from './MyNewWidget';
+import { buildMyNewWidget } from './MyNewWidget';
 
-export const widgetConfig: WidgetConfig[] = [
-  // ... existing widgets
-  {
-    id: 'my-new-widget-1',  // unique id
-    component: MyNewWidget,
-  },
-];
+export const widgetBuilderRegistry = {
+  ...widgetBuilderRegistry,
+  MyNewWidget: buildMyNewWidget,
+};
 ```
 
 ### That's It! 🎉
@@ -140,43 +128,46 @@ Your new widget will automatically:
 - ✅ Scale smoothly with fade animations
 - ✅ Support tap outside to close
 
-## Widget Props
+## Widget Builder Contract
 
-All widgets must accept the standardized `WidgetProps`:
+Every widget builder must return a `WidgetRenderDefinition`:
 
-- `id: string` - Unique identifier for the widget instance
-- `onExpand?: () => void` - Callback when expand button is pressed
-- `expanded?: boolean` - Controls small vs expanded view
-- `data?: any` - (Future) Data fetched from backend
+- `title: string` – Text shown in the NeoCard header
+- `condensedPages: ReactElement[]` – Pages for the condensed carousel
+- `expandedContent: ReactElement` – Full layout for the expanded overlay
 
-## Additional Props
+Widgets focus solely on generating these React elements. NeoCard handles:
 
-You can extend `WidgetProps` and pass additional props via the `props` field in the config:
+- Pagination and horizontal snapping
+- Expand/collapse controls and buttons
+- Sticky header + modal animation for expanded content
+
+## Runtime Configuration
+
+Dashboards (both sample `widgetConfig` and JSON-driven dashboards) reference widgets by **type string**. The builder registry maps that type to an implementation.
 
 ```tsx
-type MyWidgetProps = WidgetProps & {
-  customProp?: string;
-  anotherProp?: number;
-};
+import { widgetBuilderRegistry } from './widgetRegistry';
 
-export const MyWidget: React.FC<MyWidgetProps> = ({ 
-  id, onExpand, expanded, data,
-  customProp, anotherProp 
-}) => {
-  // Your widget implementation
-};
+widgetBuilderRegistry.MyNewWidget = buildMyNewWidget;
 ```
 
-Then in `widgetRegistry.ts`:
+The runtime config simply lists which widgets appear and provides payload data:
 
-```tsx
+```jsonc
 {
-  id: 'custom-widget-1',
-  component: MyWidget,
-  props: {
-    customProp: 'custom value',
-    anotherProp: 123,
-  },
+  "id": "portfolio-overview",
+  "name": "Portfolio Overview",
+  "widgets": [
+    {
+      "id": "portfolio-1",
+      "type": "PortfolioCard",
+      "data": {
+        "value": 45200,
+        "gain": 12.5
+      }
+    }
+  ]
 }
 ```
 
@@ -321,23 +312,25 @@ Modify `WidgetScreen.tsx` to fetch data for each widget:
 // WidgetScreen.tsx (Future implementation)
 
 {widgetConfig.map((widget) => {
-  const WidgetComponent = widget.component;
-  
-  // Fetch data for this widget
-  const { data, loading, error } = useWidgetData(
+  const builder = getWidgetBuilder(widget.type);
+  if (!builder) return null;
+
+  const { data } = useWidgetData(
     widget.id,
     widget.dataEndpoint,
     widget.refreshInterval
   );
-  
+
+  const definition = builder(data);
+
   return (
-    <WidgetComponent
+    <NeoCard
       key={widget.id}
-      id={widget.id}
+      title={definition.title}
+      condensedPages={definition.condensedPages}
+      expandedView={definition.expandedContent}
       onExpand={() => handleExpand(widget.id)}
       expanded={false}
-      data={data}                    // Pass fetched data
-      {...(widget.props || {})}
     />
   );
 })}
@@ -350,34 +343,32 @@ Update your widget to use the fetched data:
 ```tsx
 // TotalBalanceCard.tsx (Future implementation)
 
-export const TotalBalanceCard: React.FC<WidgetProps> = ({ 
-  onExpand, 
-  expanded = false,
-  data,  // Data from backend
-}) => {
-  // Use data from backend or fallback to defaults
-  const balance = data?.total_balance || 0;
-  const changePercent = data?.change_percent || 0;
-  const chartData = data?.chart_data || [];
-  
-  return (
-    <NeoCard title="Total Balance" onExpand={onExpand}>
+export const buildTotalBalanceCard: WidgetBuilder<TotalBalanceCardPayload> = (data) => {
+  const balance = data.total_balance ?? 0;
+  const changePercent = data.change_percent ?? 0;
+  const chartData = data.chart_data ?? [];
+
+  const condensedPages = [
+    <View key="summary">
       <Text style={styles.value}>{currency(balance)}</Text>
       <Text style={styles.change}>
         {changePercent > 0 ? '+' : ''}{changePercent}%
       </Text>
-      
-      {chartData.length > 0 && (
-        <LineChart data={chartData} />
-      )}
-      
-      {expanded && (
-        <View style={styles.expandedContent}>
-          {/* Expanded view with more detailed data */}
-        </View>
-      )}
-    </NeoCard>
+    </View>,
+  ];
+
+  const expandedContent = (
+    <View style={styles.expandedContent}>
+      {chartData.length > 0 && <LineChart data={chartData} />}
+      <Text style={styles.detail}>Updated just now</Text>
+    </View>
   );
+
+  return {
+    title: 'Total Balance',
+    condensedPages,
+    expandedContent,
+  };
 };
 ```
 

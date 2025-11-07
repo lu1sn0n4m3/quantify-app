@@ -6,11 +6,15 @@
  */
 
 import { getWidgetComponent } from './widgetComponentRegistry';
+import type { WidgetBuilder } from './widgetRegistry';
 
-export const validateWidget = (widget: any, widgetId: string): { isValid: boolean; Component?: any; data?: any } => {
-  const WidgetComponent = getWidgetComponent(widget.type);
-  
-  if (!WidgetComponent) {
+export const validateWidget = (
+  widget: any,
+  widgetId: string
+): { isValid: boolean; builder?: WidgetBuilder<any>; data?: any } => {
+  const widgetBuilder = getWidgetComponent(widget.type);
+
+  if (!widgetBuilder) {
     console.warn(`Widget type "${widget.type}" not found in registry`);
     return { isValid: false };
   }
@@ -21,6 +25,6 @@ export const validateWidget = (widget: any, widgetId: string): { isValid: boolea
     return { isValid: false };
   }
 
-  return { isValid: true, Component: WidgetComponent, data: widgetData };
+  return { isValid: true, builder: widgetBuilder, data: widgetData };
 };
 

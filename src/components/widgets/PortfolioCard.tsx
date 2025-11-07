@@ -12,11 +12,10 @@
  */
 import React from 'react';
 import { Text, StyleSheet, View } from 'react-native';
-import { NeoCard } from '../base/NeoCard';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { currency } from '../../utils/format';
-import { WidgetProps } from './widgetRegistry';
+import type { WidgetBuilder } from './widgetRegistry';
 import { sharedWidgetStyles } from './sharedWidgetStyles';
 
 /**
@@ -91,27 +90,12 @@ const renderExpandedView = (data: PortfolioCardPayload): React.ReactElement => {
   );
 };
 
-/**
- * PortfolioCard Component
- */
-export const PortfolioCard: React.FC<WidgetProps<PortfolioCardPayload>> = ({ 
-  data,
-  onExpand, 
-  expanded = false,
-}) => {
-  const title = getTitle(data);
-  const condensedPages = renderCondensedPages(data);
-  const expandedViewContent = renderExpandedView(data);
-
-  return (
-    <NeoCard
-      title={title}
-      onExpand={onExpand}
-      expanded={expanded}
-      condensedPages={expanded ? [] : condensedPages}
-      expandedView={expandedViewContent}
-    />
-  );
+export const buildPortfolioCard: WidgetBuilder<PortfolioCardPayload> = (data) => {
+  return {
+    title: getTitle(data),
+    condensedPages: renderCondensedPages(data),
+    expandedContent: renderExpandedView(data),
+  };
 };
 
 const styles = StyleSheet.create({

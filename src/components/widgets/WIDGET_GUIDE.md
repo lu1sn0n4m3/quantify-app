@@ -1,5 +1,7 @@
 # Widget Development Guide
 
+> ⚠️ **Legacy Content:** This document covers the previous component-based widget API. The active builder-based workflow is documented in `src/components/widgets/README.md`. Use this file only for historical reference until the new guide is completed.
+
 This guide explains how to create widgets in the new payload-based architecture. Widgets are self-contained components that display data from JSON payloads, with separate layouts for condensed and expanded views.
 
 ## Table of Contents
