@@ -1,37 +1,39 @@
 /**
  * AppNavigator Component
  * 
- * The main navigation component that sets up drawer navigation for the authenticated app.
- * Uses React Navigation's drawer navigator with custom styling to match the neobrutalist
- * design theme. Manages navigation between Home, Widgets, and Chat screens.
+ * The main navigation component that sets up the navigation hierarchy for the authenticated app.
+ * Uses a combination of bottom tab navigation (primary) and drawer navigation (secondary).
  * 
  * Used by: App.tsx (wrapped in SignedIn component)
  * 
  * Features:
- * - Custom drawer content with "QuantiFy" branding
- * - Neobrutalist styling for drawer and menu items
- * - Three main screens: Home, Widgets, Chat
+ * - Bottom tab navigation as primary navigation (Home, Market, Chat, Account)
+ * - Drawer navigation as secondary/convenience navigation (accessible via hamburger menu)
+ * - Neobrutalist styling throughout
+ * - Dashboard selection in Market tab with dropdown
  * - Sign out button at the bottom of the drawer
- * - No default header (headerShown: false) - screens manage their own headers
  * 
  * Navigation Structure:
- * - Drawer Navigator (side menu)
- *   - Home Screen
- *   - Widgets Screen (initial route)
- *   - Chat Screen
- *   - Sign Out (at bottom)
+ * - NavigationContainer
+ *   - Drawer Navigator (side menu - accessible from all screens)
+ *     - BottomTabNavigator (main navigation)
+ *       - Home Tab
+ *       - Market Tab (with dashboard selector)
+ *       - Chat Tab
+ *       - Account Tab
+ *     - Individual Dashboard Screens (accessible from drawer)
  */
 import React, { useState } from 'react';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SignOutButton } from '../components/base/SignOutButton';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
-import HomeScreen from '../screens/HomeScreen';
+import { BottomTabNavigator } from './BottomTabNavigator';
 import DashboardScreen from '../screens/DashboardScreen';
-import ChatScreen from '../screens/ChatScreen';
 import dashboardsConfig from '../config/dashboards.json';
+import { BackgroundTexture } from '../components/base/BackgroundTexture';
 
 const Drawer = createDrawerNavigator();
 
@@ -44,6 +46,7 @@ function CustomDrawerContent(props: any) {
 
   return (
     <View style={styles.drawerContainer}>
+      <BackgroundTexture />
       <DrawerContentScrollView 
         {...props}
         contentContainerStyle={styles.drawerContent}
@@ -53,31 +56,52 @@ function CustomDrawerContent(props: any) {
           <Text style={styles.drawerTitle}>QuantiFy</Text>
         </View>
         
-        {/* Home */}
+        {/* Main Navigation - Link to tabs */}
         <DrawerItem
           label="Home"
-          onPress={() => props.navigation.navigate('Home')}
-          labelStyle={[
-            styles.drawerItemLabel,
-            props.state.routes[props.state.index].name === 'Home' 
-              ? styles.drawerItemLabelActive
-              : styles.drawerItemLabelInactive
-          ]}
-          style={[
-            styles.drawerItem,
-            props.state.routes[props.state.index].name === 'Home' && styles.drawerItemActive
-          ]}
+          onPress={() => props.navigation.navigate('MainTabs', { screen: 'Home' })}
+          labelStyle={styles.drawerItemLabel}
+          style={styles.drawerItem}
           activeBackgroundColor={colors.surface}
           activeTintColor={colors.ink}
           inactiveTintColor={colors.inkMuted}
-          focused={props.state.routes[props.state.index].name === 'Home'}
         />
 
-        {/* Dashboards Section (Collapsible) */}
+        <DrawerItem
+          label="Market"
+          onPress={() => props.navigation.navigate('MainTabs', { screen: 'Market' })}
+          labelStyle={styles.drawerItemLabel}
+          style={styles.drawerItem}
+          activeBackgroundColor={colors.surface}
+          activeTintColor={colors.ink}
+          inactiveTintColor={colors.inkMuted}
+        />
+
+        <DrawerItem
+          label="Chat"
+          onPress={() => props.navigation.navigate('MainTabs', { screen: 'Chat' })}
+          labelStyle={styles.drawerItemLabel}
+          style={styles.drawerItem}
+          activeBackgroundColor={colors.surface}
+          activeTintColor={colors.ink}
+          inactiveTintColor={colors.inkMuted}
+        />
+
+        <DrawerItem
+          label="Account"
+          onPress={() => props.navigation.navigate('MainTabs', { screen: 'Account' })}
+          labelStyle={styles.drawerItemLabel}
+          style={styles.drawerItem}
+          activeBackgroundColor={colors.surface}
+          activeTintColor={colors.ink}
+          inactiveTintColor={colors.inkMuted}
+        />
+
+        {/* Dashboards Section (Collapsible) - Quick access */}
         <DrawerItem
           label={() => (
             <View style={styles.drawerItemRow}>
-              <Text style={styles.drawerItemLabel}>Dashboards</Text>
+              <Text style={styles.drawerItemLabel}>Quick Access</Text>
               <Text style={styles.arrow}>{dashboardsExpanded ? '▼' : '▶'}</Text>
             </View>
           )}
@@ -113,26 +137,6 @@ function CustomDrawerContent(props: any) {
             />
           );
         })}
-
-        {/* Chat */}
-        <DrawerItem
-          label="Chat"
-          onPress={() => props.navigation.navigate('Chat')}
-          labelStyle={[
-            styles.drawerItemLabel,
-            props.state.routes[props.state.index].name === 'Chat' 
-              ? styles.drawerItemLabelActive
-              : styles.drawerItemLabelInactive
-          ]}
-          style={[
-            styles.drawerItem,
-            props.state.routes[props.state.index].name === 'Chat' && styles.drawerItemActive
-          ]}
-          activeBackgroundColor={colors.surface}
-          activeTintColor={colors.ink}
-          inactiveTintColor={colors.inkMuted}
-          focused={props.state.routes[props.state.index].name === 'Chat'}
-        />
       </DrawerContentScrollView>
       
       {/* Sign out button at the bottom */}
@@ -144,62 +148,63 @@ function CustomDrawerContent(props: any) {
 }
 
 export function AppNavigator() {
-  // Find the default dashboard
-  const defaultDashboard = dashboardsConfig.dashboards.find(d => d.isDefault) || dashboardsConfig.dashboards[0];
-  
   return (
-    <NavigationContainer>
-      <Drawer.Navigator 
-        initialRouteName={defaultDashboard.id}
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
-        screenOptions={{
-          headerShown: false,
-          drawerStyle: {
-            backgroundColor: colors.screenBg,
-            width: 300,
-          },
-          overlayColor: 'rgba(0, 0, 0, 0.5)',
-        }}
-      >
-        <Drawer.Screen 
-          name="Home" 
-          component={HomeScreen}
-          options={{ drawerLabel: () => null, drawerItemStyle: { display: 'none' } }}
-        />
-        
-        {/* Dynamically create a screen for each dashboard */}
-        {dashboardsConfig.dashboards.map((dashboard) => (
+    <View style={styles.navigatorContainer}>
+      <BackgroundTexture />
+      <NavigationContainer>
+        <Drawer.Navigator
+          initialRouteName="MainTabs"
+          drawerContent={(props) => <CustomDrawerContent {...props} />}
+          screenOptions={{
+            headerShown: false,
+            drawerStyle: {
+              backgroundColor: 'transparent',
+              width: 300,
+            },
+            overlayColor: 'rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          {/* Main bottom tab navigator - Primary navigation */}
           <Drawer.Screen
-            key={dashboard.id}
-            name={dashboard.id}
-            component={DashboardScreen}
-            initialParams={{ dashboardId: dashboard.id }}
-            options={{ 
-              title: dashboard.name,
-              drawerLabel: () => null,
-              drawerItemStyle: { display: 'none' }
-            }}
+            name="MainTabs"
+            component={BottomTabNavigator}
+            options={{ drawerLabel: () => null, drawerItemStyle: { display: 'none' } }}
           />
-        ))}
-        
-        <Drawer.Screen 
-          name="Chat" 
-          component={ChatScreen}
-          options={{ drawerLabel: () => null, drawerItemStyle: { display: 'none' } }}
-        />
-      </Drawer.Navigator>
-    </NavigationContainer>
+
+          {/* Individual dashboard screens - Accessible from drawer for quick access */}
+          {dashboardsConfig.dashboards.map((dashboard) => (
+            <Drawer.Screen
+              key={dashboard.id}
+              name={dashboard.id}
+              component={DashboardScreen}
+              initialParams={{ dashboardId: dashboard.id }}
+              options={{
+                title: dashboard.name,
+                drawerLabel: () => null,
+                drawerItemStyle: { display: 'none' }
+              }}
+            />
+          ))}
+        </Drawer.Navigator>
+      </NavigationContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  navigatorContainer: {
+    flex: 1,
+    backgroundColor: colors.screenBg,
+    position: 'relative',
+  },
   drawerContainer: {
     flex: 1,
     backgroundColor: colors.screenBg,
+    position: 'relative',
   },
   drawer: {
     flex: 1,
-    backgroundColor: colors.screenBg,
+    backgroundColor: 'transparent',
   },
   drawerContent: {
     paddingTop: 70,

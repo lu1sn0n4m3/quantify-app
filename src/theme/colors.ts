@@ -67,7 +67,7 @@
 // ============================================
 export const colors = {
   // Foundations - Refined with subtle warmth
-  screenBg:  '#FAFAF9', // warmer paper with slight beige tint
+  screenBg:  '#E6ECF8', // light gray-blue backdrop for subtle contrast
   cardBg:    '#FFFFFF',
   cardBgElevated: '#FEFEFE', // subtle tint for depth
   ink:       '#0A0A0A', // deeper black for premium feel
@@ -100,6 +100,8 @@ export const colors = {
   pastelLilac:  '#E9D5FF',
   pastelBlush:  '#FCE7F3',
   pastelMaize:  '#FEF3C7',
+
+  headerBg: '#2243C6', // slightly lighter cobalt for dominant header
   
   // Surface colors for depth
   surface:   '#F9FAFB',

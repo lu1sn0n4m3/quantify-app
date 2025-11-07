@@ -8,4 +8,5 @@
 
 export { ScreenLayout } from './ScreenLayout';
 export { ScreenHeader } from './ScreenHeader';
+export type { Dashboard } from './ScreenHeader';
 

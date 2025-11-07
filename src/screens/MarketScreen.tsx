@@ -1,60 +1,84 @@
 /**
- * DashboardScreen Component
+ * MarketScreen Component
  * 
- * Displays a collection of widgets based on the selected dashboard configuration.
- * The dashboard configuration is loaded from dashboards.json, which defines:
- * - Dashboard ID and name
- * - List of widgets to display
- * - Widget types and their properties
+ * The market screen that displays a selected dashboard with widgets.
+ * Features a dropdown in the header to switch between dashboards.
+ * Remembers the last selected dashboard using AsyncStorage.
+ * 
+ * Used by: BottomTabNavigator
  * 
  * Features:
- * - Dynamic widget rendering based on JSON config
- * - Widget expansion/modal overlay
- * - Smooth animations
- * - Fixed header
- * - Sidebar access while widget is expanded
- * 
- * Used by: AppNavigator (for each dashboard route)
+ * - Dashboard dropdown selector in header
+ * - Persists last selected dashboard
+ * - Displays widgets from selected dashboard
+ * - Widget expand/collapse with blur overlay (same as DashboardScreen)
+ * - Scrollable widget list
  */
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Animated, StyleSheet, Dimensions, ScrollView, BackHandler, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState, useEffect, useRef } from 'react';
+import { Animated, StyleSheet, BackHandler, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
-import { ScreenHeader } from '../components/layout/ScreenHeader';
+import { ScreenHeader, Dashboard } from '../components/layout/ScreenHeader';
 import { BackgroundTexture } from '../components/base/BackgroundTexture';
-import { colors } from '../theme/colors';
-import { getWidgetComponent } from '../components/widgets/widgetComponentRegistry';
 import { validateWidget } from '../components/widgets/widgetValidation';
 import dashboardsConfig from '../config/dashboards.json';
+import { colors } from '../theme/colors';
 
-const { width } = Dimensions.get('window');
+const LAST_DASHBOARD_KEY = '@quantify/lastSelectedDashboard';
 
-type DashboardScreenProps = {
-  route?: {
-    params?: {
-      dashboardId?: string;
-    };
-  };
-};
-
-export default function DashboardScreen({ route }: DashboardScreenProps) {
-  const dashboardId = route?.params?.dashboardId || dashboardsConfig.dashboards.find(d => d.isDefault)?.id || dashboardsConfig.dashboards[0].id;
+export default function MarketScreen() {
+  const [selectedDashboardId, setSelectedDashboardId] = useState<string>(
+    dashboardsConfig.dashboards[0]?.id || ''
+  );
+  const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(75); // Default fallback
+  const [headerHeight, setHeaderHeight] = useState(75);
   const lastExpandedId = useRef<string | null>(null);
   const scaleYAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const blurAnim = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
   const headerRef = useRef<View>(null);
 
-  // Find the dashboard configuration
-  const dashboard = dashboardsConfig.dashboards.find(d => d.id === dashboardId);
+  // Load last selected dashboard on mount
+  useEffect(() => {
+    loadLastDashboard();
+  }, []);
 
+  const loadLastDashboard = async () => {
+    try {
+      const lastDashboardId = await AsyncStorage.getItem(LAST_DASHBOARD_KEY);
+      if (lastDashboardId) {
+        // Verify dashboard still exists
+        const dashboardExists = dashboardsConfig.dashboards.some(d => d.id === lastDashboardId);
+        if (dashboardExists) {
+          setSelectedDashboardId(lastDashboardId);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load last dashboard:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDashboardSelect = async (dashboardId: string) => {
+    setSelectedDashboardId(dashboardId);
+    // Close expanded widget when switching dashboards
+    if (expandedId) {
+      setExpandedId(null);
+    }
+    try {
+      await AsyncStorage.setItem(LAST_DASHBOARD_KEY, dashboardId);
+    } catch (error) {
+      console.error('Failed to save dashboard selection:', error);
+    }
+  };
+
+  // Animate expand/collapse
   useEffect(() => {
     if (expandedId) {
       lastExpandedId.current = expandedId;
@@ -106,6 +130,7 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
     }
   }, [expandedId, scaleYAnim, opacityAnim, blurAnim, modalVisible]);
 
+  // Handle back button
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       if (expandedId) {
@@ -126,44 +151,55 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
     }
   };
 
-  if (!dashboard) {
+  // Find selected dashboard
+  const selectedDashboard = dashboardsConfig.dashboards.find(
+    d => d.id === selectedDashboardId
+  ) || dashboardsConfig.dashboards[0];
+
+  // Convert dashboards to dropdown format
+  const dropdownDashboards: Dashboard[] = dashboardsConfig.dashboards.map(d => ({
+    id: d.id,
+    name: d.name,
+    description: d.description,
+  }));
+
+  if (isLoading) {
     return (
-      <>
-        <SafeAreaView style={styles.fixedHeaderContainer} edges={['top']} pointerEvents="box-none">
+      <View style={styles.loadingContainer}>
+        <View style={[styles.fixedHeaderContainer, { paddingTop: insets.top }]}>
           <ScreenHeader />
-        </SafeAreaView>
-        <ScreenLayout contentStyle={styles.mainContent}>
-          {/* Dashboard not found */}
-        </ScreenLayout>
-      </>
+        </View>
+      </View>
     );
   }
 
   const widgetIdToDisplay = expandedId || lastExpandedId.current;
-  const displayWidget = dashboard.widgets.find(w => w.id === widgetIdToDisplay);
-  const DisplayWidgetComponent = displayWidget ? getWidgetComponent(displayWidget.type) : null;
+  const displayWidget = selectedDashboard.widgets.find(w => w.id === widgetIdToDisplay);
 
   return (
     <>
-      {/* Fixed header - completely independent, never affected by modal */}
+      {/* Fixed header with dropdown - completely independent, never affected by expansion */}
       <View 
         ref={headerRef}
         style={[styles.fixedHeaderContainer, { paddingTop: insets.top }]}
         onLayout={(event) => {
           const { height } = event.nativeEvent.layout;
-          // Height includes the header stripe (1px at bottom of headerContainer)
-          // The stripe is positioned absolutely at bottom: 0, so it's the last pixel
-          // We use the full height so expanded view starts right below the stripe
           setHeaderHeight(height);
         }}
       >
-        <ScreenHeader />
+        <ScreenHeader
+          dropdownConfig={{
+            dashboards: dropdownDashboards,
+            selectedId: selectedDashboardId,
+            onSelect: handleDashboardSelect,
+          }}
+        />
       </View>
 
       {/* Main content with top padding for header */}
       <ScreenLayout contentStyle={styles.mainContent}>
-        {/* Dynamically render all widgets from the dashboard config */}
-        {dashboard.widgets.map((widget) => {
+        {/* Dynamically render all widgets from the selected dashboard */}
+        {selectedDashboard.widgets.map((widget) => {
           const validation = validateWidget(widget, widget.id);
           if (!validation.isValid || !validation.Component || !validation.data) {
             return null;
@@ -181,14 +217,17 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
         })}
       </ScreenLayout>
 
-      {/* Expanded Widget Overlay - only affects content area */}
+      {/* Expanded Widget Overlay - only affects content area (same as DashboardScreen) */}
       {modalVisible && (
         <>
           {/* Blur layer - respects header space */}
           <Animated.View 
             style={[
               styles.expandedOverlayBase,
-              { top: headerHeight, opacity: blurAnim }
+              { 
+                top: headerHeight,
+                opacity: blurAnim 
+              }
             ]}
             pointerEvents="none"
           >
@@ -200,8 +239,7 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
             style={[
               styles.expandedContentContainerBase,
               { 
-                top: headerHeight, // Start exactly at header stripe (stripe is at bottom of header)
-                bottom: 0, // Extend all the way to bottom
+                top: headerHeight,
                 transform: [{ scaleY: scaleYAnim }],
                 opacity: opacityAnim,
               }
@@ -236,6 +274,10 @@ export default function DashboardScreen({ route }: DashboardScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: colors.screenBg,
+  },
   fixedHeaderContainer: {
     position: 'absolute',
     top: 0,
@@ -246,7 +288,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     paddingTop: 65,
-    paddingBottom: 20,
+    paddingBottom: 105, // Extra padding for bottom tab bar (85) + regular padding (20)
   },
   expandedOverlayBase: {
     position: 'absolute',

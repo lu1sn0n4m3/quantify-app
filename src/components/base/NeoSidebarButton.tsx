@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   line: {
     width: 20,
     height: 2,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.white,
     borderRadius: 1,
     position: 'absolute',
   },

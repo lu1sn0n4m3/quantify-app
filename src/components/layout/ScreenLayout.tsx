@@ -16,9 +16,9 @@
  * - Bottom padding for scroll content
  * - Full flex layout
  */
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useMemo } from 'react';
 import { ScrollView, StyleSheet, ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
 import { BackgroundTexture } from '../base/BackgroundTexture';
 
@@ -32,10 +32,31 @@ export const ScreenLayout: React.FC<PropsWithChildren<ScreenLayoutProps>> = ({
   contentStyle,
   containerStyle,
 }) => {
+  const insets = useSafeAreaInsets();
+
+  const computedContentStyle = useMemo(() => {
+    const DEFAULT_PADDING_BOTTOM = 100;
+    const flattenedContentStyle = StyleSheet.flatten(contentStyle) || {};
+    const providedPaddingBottom = typeof flattenedContentStyle.paddingBottom === 'number' ? flattenedContentStyle.paddingBottom : undefined;
+    const basePaddingBottom = providedPaddingBottom ?? DEFAULT_PADDING_BOTTOM;
+    return [
+      styles.scrollContent,
+      contentStyle,
+      {
+        paddingBottom: basePaddingBottom + insets.bottom,
+      },
+    ];
+  }, [contentStyle, insets.bottom]);
+
   return (
-    <SafeAreaView style={[styles.container, containerStyle]}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, containerStyle]}>
       <BackgroundTexture />
-      <ScrollView contentContainerStyle={[styles.scrollContent, contentStyle]}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={computedContentStyle}
+        contentInsetAdjustmentBehavior="never"
+        scrollIndicatorInsets={{ bottom: insets.bottom }}
+      >
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -45,13 +66,16 @@ export const ScreenLayout: React.FC<PropsWithChildren<ScreenLayoutProps>> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.cardBgElevated || colors.surface,
+    backgroundColor: colors.screenBg,
     position: 'relative',
   },
   scrollContent: {
-    paddingBottom: 100,
+    flexGrow: 1,
     position: 'relative',
     zIndex: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
 });
 

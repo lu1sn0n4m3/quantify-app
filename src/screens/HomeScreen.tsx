@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingTop: 90,
+    paddingBottom: 85, // Extra padding for bottom tab bar
   },
   content: {
     flex: 1,

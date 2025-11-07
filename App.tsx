@@ -7,6 +7,7 @@
  * on the user's signed-in state.
  * 
  * Features:
+ * - SafeAreaProvider wrapper for safe area handling
  * - ClerkProvider wrapper for authentication context
  * - SignedIn/SignedOut conditional rendering
  * - Secure token caching using Expo SecureStore
@@ -19,6 +20,7 @@
  * Note: Requires EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable
  */
 import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-expo';
 import { tokenCache } from './src/auth/tokenCache';
 import { AppNavigator } from './src/navigation/AppNavigator';
@@ -27,14 +29,16 @@ import { EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY } from '@env';
 
 export default function App() {
   return (
-    <ClerkProvider publishableKey={EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
-      <SignedIn>
-        <AppNavigator />
-      </SignedIn>
+    <SafeAreaProvider>
+      <ClerkProvider publishableKey={EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
+        <SignedIn>
+          <AppNavigator />
+        </SignedIn>
 
-      <SignedOut>
-        <AuthScreen />
-      </SignedOut>
-    </ClerkProvider>
+        <SignedOut>
+          <AuthScreen />
+        </SignedOut>
+      </ClerkProvider>
+    </SafeAreaProvider>
   );
 }
