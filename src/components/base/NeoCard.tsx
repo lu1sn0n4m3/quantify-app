@@ -25,6 +25,11 @@ import { BackgroundTexture } from './BackgroundTexture';
 
 export const CARD_RADIUS = 6;
 
+const OPEN_DURATION = 420;
+const CLOSE_DURATION = 260;
+const OPEN_EASING = Easing.bezier(0.22, 0.61, 0.36, 1);
+const CLOSE_EASING = Easing.bezier(0.4, 0, 0.2, 1);
+
 type CardLayout = {
   x: number;
   y: number;
@@ -62,6 +67,7 @@ export const NeoCard: React.FC<NeoCardProps> = ({
   const [windowSize, setWindowSize] = useState(() => Dimensions.get('window'));
   const animationProgress = useRef(new Animated.Value(0)).current;
   const cardWrapperRef = useRef<View | null>(null);
+  const [transitionState, setTransitionState] = useState<'idle' | 'opening' | 'closing'>('idle');
   
   // Generate unique IDs for SVG gradients to avoid conflicts
   const cardId = useRef(Math.random().toString(36).substring(2, 11)).current;
@@ -125,28 +131,33 @@ export const NeoCard: React.FC<NeoCardProps> = ({
   }, [measureCard]);
 
   const openAnimation = useCallback(() => {
+    setTransitionState('opening');
     setOverlayVisible(true);
     animationProgress.stopAnimation();
     animationProgress.setValue(0);
     Animated.timing(animationProgress, {
       toValue: 1,
-      duration: 320,
-      easing: Easing.out(Easing.cubic),
+      duration: OPEN_DURATION,
+      easing: OPEN_EASING,
       useNativeDriver: false,
-    }).start();
+    }).start(() => {
+      setTransitionState('idle');
+    });
   }, [animationProgress]);
 
   const closeAnimation = useCallback(() => {
+    setTransitionState('closing');
     animationProgress.stopAnimation();
     Animated.timing(animationProgress, {
       toValue: 0,
-      duration: 220,
-      easing: Easing.in(Easing.cubic),
+      duration: CLOSE_DURATION,
+      easing: CLOSE_EASING,
       useNativeDriver: false,
     }).start(({ finished }) => {
       if (finished) {
         animationProgress.setValue(0);
         setOverlayVisible(false);
+        setTransitionState('idle');
       }
     });
   }, [animationProgress]);
@@ -229,14 +240,38 @@ export const NeoCard: React.FC<NeoCardProps> = ({
   });
 
   const contentOpacity = animationProgress.interpolate({
-    inputRange: [0, 0.35, 1],
-    outputRange: [0, 0, 1],
+    inputRange: [0, 0.55, 1],
+    outputRange: [0, 0.1, 1],
   });
 
   const animatedBackgroundColor = animationProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [colors.cardBg, colors.screenBg],
   });
+
+  const shouldShowCondensed = !expanded || transitionState === 'opening';
+  const shouldRenderExpandedContent = overlayVisible && transitionState !== 'opening';
+  const condensedOpacity = transitionState === 'opening'
+    ? animationProgress.interpolate({
+        inputRange: [0, 0.35, 0.7, 1],
+        outputRange: [1, 0.85, 0.3, 0],
+        extrapolate: 'clamp',
+      })
+    : 1;
+
+  const expandedHeader = (
+    <View style={styles.titleContainerSticky}>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{title}</Text>
+        {onExpand && (
+          <NeoDotsButton onPress={onExpand} expanded={overlayVisible} style={styles.expand} testID="expand-btn" />
+        )}
+      </View>
+      <View style={styles.stickyHeaderStripe} pointerEvents="none">
+        <View style={styles.greyLine} />
+      </View>
+    </View>
+  );
 
   return (
     <>
@@ -247,9 +282,9 @@ export const NeoCard: React.FC<NeoCardProps> = ({
       >
         <View
           style={styles.card}
-          pointerEvents={expanded ? 'none' : 'auto'}
+          pointerEvents={overlayVisible ? 'none' : 'auto'}
         >
-          {!expanded && (
+          {shouldShowCondensed && (
             <View style={styles.patternOverlay} pointerEvents="none">
               <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
                 <Defs>
@@ -262,13 +297,13 @@ export const NeoCard: React.FC<NeoCardProps> = ({
             </View>
           )}
 
-          {!expanded && (
+          {shouldShowCondensed && (
             <View style={styles.headerStripe} pointerEvents="none">
               <View style={styles.greyLine} />
             </View>
           )}
 
-          {!expanded && (
+          {shouldShowCondensed && (
             <View style={styles.innerGlow} pointerEvents="none">
               <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
                 <Defs>
@@ -297,8 +332,9 @@ export const NeoCard: React.FC<NeoCardProps> = ({
             </View>
           )}
 
-          <View style={styles.contentLayer}>
-            {!expanded && (
+          <Animated.View style={[styles.contentLayer, { opacity: condensedOpacity }]}
+          >
+            {shouldShowCondensed && (
               <View style={styles.titleContainer}>
                 <Text style={styles.title}>{title}</Text>
                 {onExpand && (
@@ -307,7 +343,7 @@ export const NeoCard: React.FC<NeoCardProps> = ({
               </View>
             )}
 
-            {totalPages > 0 ? (
+            {shouldShowCondensed && totalPages > 0 ? (
               <ScrollView
                 ref={scrollViewRef}
                 horizontal
@@ -329,10 +365,10 @@ export const NeoCard: React.FC<NeoCardProps> = ({
               </ScrollView>
             ) : null}
 
-            {totalPages > 1 && (
+            {shouldShowCondensed && totalPages > 1 && (
               <WidgetPageIndicator currentPage={currentPage} totalPages={totalPages} />
             )}
-          </View>
+          </Animated.View>
         </View>
       </View>
 
@@ -375,37 +411,40 @@ export const NeoCard: React.FC<NeoCardProps> = ({
               ]}
             >
               <BackgroundTexture />
-              <Animated.View style={[styles.expandedCardContentWrapper, { opacity: contentOpacity }]}>
-                <SafeAreaView style={styles.expandedSafeArea} edges={['bottom']}>
-                  <ScrollView
-                    ref={expandedScrollViewRef}
-                    style={styles.expandedScrollView}
-                    contentContainerStyle={styles.expandedScrollContent}
-                    showsVerticalScrollIndicator={true}
-                    stickyHeaderIndices={[0]}
-                    onLayout={(event) => {
-                      const { height } = event.nativeEvent.layout;
-                      setScrollViewHeight(height);
-                    }}
-                  >
-                    <View style={styles.titleContainerSticky}>
-                      <View style={styles.titleRow}>
-                        <Text style={styles.title}>{title}</Text>
-                        {onExpand && (
-                          <NeoDotsButton onPress={onExpand} expanded={overlayVisible} style={styles.expand} testID="expand-btn" />
-                        )}
+              {!shouldRenderExpandedContent && (
+                <View style={styles.expandedPlaceholder} pointerEvents="none">
+                  {expandedHeader}
+                </View>
+              )}
+              {shouldRenderExpandedContent && (
+                <Animated.View
+                  style={[styles.expandedCardContentWrapper, { opacity: contentOpacity }]}
+                >
+                  <SafeAreaView style={styles.expandedSafeArea} edges={['bottom']}>
+                    <ScrollView
+                      ref={expandedScrollViewRef}
+                      style={styles.expandedScrollView}
+                      contentContainerStyle={styles.expandedScrollContent}
+                      showsVerticalScrollIndicator={true}
+                      stickyHeaderIndices={[0]}
+                      onLayout={(event) => {
+                        const { height } = event.nativeEvent.layout;
+                        setScrollViewHeight(height);
+                      }}
+                    >
+                      {expandedHeader}
+                      <View style={[styles.expandedContent, scrollViewHeight > 0 && { minHeight: Math.max(scrollViewHeight - 80, 400) }]}>
+                        {expandedView}
                       </View>
-                      <View style={styles.stickyHeaderStripe} pointerEvents="none">
-                        <View style={styles.greyLine} />
-                      </View>
-                    </View>
-                    <View style={[styles.expandedContent, scrollViewHeight > 0 && { minHeight: Math.max(scrollViewHeight - 80, 400) }]}>
-                      {expandedView}
-                    </View>
-                  </ScrollView>
-                </SafeAreaView>
-              </Animated.View>
+                    </ScrollView>
+                  </SafeAreaView>
+                </Animated.View>
+              )}
             </Animated.View>
+
+            {expandedBottomOffset > 0 && (
+              <View pointerEvents="none" style={[styles.tabBarShim, { height: expandedBottomOffset }]} />
+            )}
           </View>
         </Modal>
       )}
@@ -539,11 +578,30 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 12,
   },
+  expandedPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.cardBg,
+    justifyContent: 'flex-start',
+  },
   expandedCardContentWrapper: {
     flex: 1,
   },
   expandedSafeArea: {
     flex: 1,
+  },
+  tabBarShim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
 
