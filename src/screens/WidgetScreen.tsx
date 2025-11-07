@@ -12,17 +12,15 @@
  * - Centered "QuantiFy" header title
  * - Scrollable content area for widgets
  * - State management for widget expansion
- * - Animated floating expansion with blurred background
  * - Automatic rendering of all widgets from widgetRegistry
  * 
  * Modular Widget System:
  * To add a new widget, simply add it to the widgetRegistry.ts file. No changes needed here!
  * All widgets automatically get the same animation and expansion behavior.
  */
-import React, { useState, useRef, useEffect } from 'react';
-import { Animated, StyleSheet, ScrollView, BackHandler } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
 import { widgetConfig, getWidgetBuilder } from '../components/widgets/widgetRegistry';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
@@ -31,102 +29,40 @@ import { NeoCard } from '../components/base/NeoCard';
 
 export default function WidgetScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const lastExpandedId = useRef<string | null>(null);
-  const slideAnim = useRef(new Animated.Value(300)).current; // Slide up from bottom
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const blurAnim = useRef(new Animated.Value(0)).current;
+  const [headerHeight, setHeaderHeight] = useState(90);
 
-  useEffect(() => {
-    if (expandedId) {
-      // Store the current expanded ID
-      lastExpandedId.current = expandedId;
-      
-      // Show modal immediately
-      setModalVisible(true);
-      
-      // Reset values before animating in
-      slideAnim.setValue(300);
-      opacityAnim.setValue(0);
-      blurAnim.setValue(0);
-      
-      // Animate in
-      Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 80,
-          friction: 9,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(blurAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    } else if (modalVisible) {
-      // Animate out then hide modal
-      Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 300,
-          useNativeDriver: true,
-          tension: 80,
-          friction: 9,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(blurAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: false,
-        }),
-      ]).start(() => {
-        // Hide modal after animation completes
-        setModalVisible(false);
-        lastExpandedId.current = null;
-      });
-    }
-  }, [expandedId, slideAnim, opacityAnim, blurAnim, modalVisible]);
-
-  const handleExpand = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
-  // Handle Android back button to close expanded view
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       if (expandedId) {
         setExpandedId(null);
-        return true; // Prevent default back behavior
+        return true;
       }
-      return false; // Allow default back behavior
+      return false;
     });
 
     return () => backHandler.remove();
   }, [expandedId]);
 
-  // Find the widget to display - use current or last expanded ID during close animation
-  const widgetIdToDisplay = expandedId || lastExpandedId.current;
-  const displayWidget = widgetConfig.find(w => w.id === widgetIdToDisplay);
+  const handleExpand = (id: string) => {
+    setExpandedId((current) => (current === id ? null : id));
+  };
 
   return (
     <>
       {/* Fixed header - always on top, never moves */}
-            <SafeAreaView style={styles.fixedHeaderContainer} edges={['top']} pointerEvents="box-none">
-              <ScreenHeader />
-            </SafeAreaView>
+      <SafeAreaView
+        style={styles.fixedHeaderContainer}
+        edges={['top']}
+        pointerEvents="box-none"
+        onLayout={(event) => {
+          setHeaderHeight(event.nativeEvent.layout.height);
+        }}
+      >
+        <ScreenHeader />
+      </SafeAreaView>
 
       {/* Main content with top padding for header */}
       <ScreenLayout contentStyle={styles.mainContent}>
-        {/* Dynamically render all widgets from the registry */}
         {widgetConfig.map((widget) => {
           const builder = getWidgetBuilder(widget.type);
           if (!builder) {
@@ -143,65 +79,11 @@ export default function WidgetScreen() {
               condensedPages={definition.condensedPages}
               expandedView={definition.expandedContent}
               onExpand={() => handleExpand(widget.id)}
-              expanded={false}
+              expanded={expandedId === widget.id}
+              expandedTopOffset={headerHeight}
             />
           );
         })}
-
-        {/* Expanded widget overlay */}
-        {modalVisible && (
-          <>
-            {/* Blur background */}
-            <Animated.View 
-              style={[
-                StyleSheet.absoluteFill, 
-                styles.expandedOverlay,
-                { opacity: blurAnim }
-              ]}
-              pointerEvents="none"
-            >
-              <BlurView intensity={20} style={StyleSheet.absoluteFill} />
-            </Animated.View>
-            
-            {/* Scrollable content with animation */}
-            <Animated.View 
-              style={[
-                styles.expandedContentContainer,
-                { 
-                  transform: [{ translateY: slideAnim }],
-                  opacity: opacityAnim,
-                }
-              ]}
-            >
-              <SafeAreaView style={styles.expandedSafeArea} edges={['bottom']}>
-                <ScrollView 
-                  style={styles.expandedScrollView}
-                  contentContainerStyle={styles.expandedScrollContent}
-                >
-                  {displayWidget && (() => {
-                    const builder = getWidgetBuilder(displayWidget.type);
-                    if (!builder) {
-                      console.warn(`Widget type "${displayWidget.type}" not found in widgetConfig map.`);
-                      return null;
-                    }
-
-                    const definition = builder(displayWidget.data);
-
-                    return (
-                      <NeoCard
-                        title={definition.title}
-                        condensedPages={definition.condensedPages}
-                        expandedView={definition.expandedContent}
-                        onExpand={() => handleExpand(displayWidget.id)}
-                        expanded={true}
-                      />
-                    );
-                  })()}
-                </ScrollView>
-              </SafeAreaView>
-            </Animated.View>
-          </>
-        )}
       </ScreenLayout>
     </>
   );
@@ -218,27 +100,5 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     paddingTop: 90,
-  },
-  expandedOverlay: {
-    zIndex: 1000,
-  },
-  expandedContentContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1001,
-    paddingTop: 90,
-    backgroundColor: colors.screenBg,
-  },
-  expandedSafeArea: {
-    flex: 1,
-  },
-  expandedScrollView: {
-    flex: 1,
-  },
-  expandedScrollContent: {
-    paddingBottom: 20,
   },
 });
