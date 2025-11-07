@@ -8,5 +8,6 @@
 
 export { ScreenLayout } from './ScreenLayout';
 export { ScreenHeader } from './ScreenHeader';
+export { useScreenOverlay } from './ScreenOverlayContext';
 export type { Dashboard } from './ScreenHeader';
 

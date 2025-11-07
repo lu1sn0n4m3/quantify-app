@@ -17,6 +17,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, BackHandler, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenLayout } from '../components/layout/ScreenLayout';
 import { ScreenHeader, Dashboard } from '../components/layout/ScreenHeader';
@@ -26,7 +27,6 @@ import dashboardsConfig from '../config/dashboards.json';
 import { colors } from '../theme/colors';
 
 const LAST_DASHBOARD_KEY = '@quantify/lastSelectedDashboard';
-const TAB_BAR_HEIGHT = 65;
 
 export default function MarketScreen() {
   const [selectedDashboardId, setSelectedDashboardId] = useState<string>(
@@ -36,6 +36,7 @@ export default function MarketScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [headerHeight, setHeaderHeight] = useState(75);
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const headerRef = useRef<View>(null);
 
   // Load last selected dashboard on mount
@@ -105,7 +106,7 @@ export default function MarketScreen() {
     name: d.name,
   }));
 
-  const expandedBottomOffset = insets.bottom + TAB_BAR_HEIGHT;
+  const expandedBottomOffset = tabBarHeight;
 
   if (isLoading) {
     return (

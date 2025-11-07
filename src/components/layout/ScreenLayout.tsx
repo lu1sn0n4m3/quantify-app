@@ -16,11 +16,12 @@
  * - Bottom padding for scroll content
  * - Full flex layout
  */
-import React, { PropsWithChildren, useMemo } from 'react';
-import { ScrollView, StyleSheet, ViewStyle } from 'react-native';
+import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, ViewStyle, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
 import { BackgroundTexture } from '../core';
+import { ScreenOverlayContext } from './ScreenOverlayContext';
 
 type ScreenLayoutProps = {
   contentStyle?: ViewStyle;
@@ -33,6 +34,36 @@ export const ScreenLayout: React.FC<PropsWithChildren<ScreenLayoutProps>> = ({
   containerStyle,
 }) => {
   const insets = useSafeAreaInsets();
+  const [overlays, setOverlays] = useState<Record<string, React.ReactNode>>({});
+
+  const setOverlay = useCallback((id: string, content: React.ReactNode | null) => {
+    setOverlays((prev) => {
+      if (!content) {
+        if (!prev[id]) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+
+      if (prev[id] === content) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [id]: content,
+      };
+    });
+  }, []);
+
+  const overlayContextValue = useMemo(
+    () => ({
+      setOverlay,
+    }),
+    [setOverlay],
+  );
 
   const computedContentStyle = useMemo(() => {
     const DEFAULT_PADDING_BOTTOM = 24;
@@ -51,17 +82,26 @@ export const ScreenLayout: React.FC<PropsWithChildren<ScreenLayoutProps>> = ({
   }, [contentStyle, insets.bottom]);
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, containerStyle]}>
-      <BackgroundTexture />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={computedContentStyle}
-        contentInsetAdjustmentBehavior="never"
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
-      >
-        {children}
-      </ScrollView>
-    </SafeAreaView>
+    <ScreenOverlayContext.Provider value={overlayContextValue}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, containerStyle]}>
+        <BackgroundTexture />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={computedContentStyle}
+          contentInsetAdjustmentBehavior="never"
+          scrollIndicatorInsets={{ bottom: insets.bottom }}
+        >
+          {children}
+        </ScrollView>
+        {Object.keys(overlays).length > 0 && (
+          <View style={styles.overlayHost} pointerEvents="box-none">
+            {Object.entries(overlays).map(([id, content]) => (
+              <React.Fragment key={id}>{content}</React.Fragment>
+            ))}
+          </View>
+        )}
+      </SafeAreaView>
+    </ScreenOverlayContext.Provider>
   );
 };
 
@@ -78,6 +118,10 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  overlayHost: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
   },
 });
 

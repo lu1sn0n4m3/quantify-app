@@ -12,9 +12,8 @@
  * 
  * Used by: All widget components (StockPriceCard, TotalBalanceCard, etc.)
  */
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent, Modal, Animated, Easing, LayoutChangeEvent, ScaledSize } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent, Animated, Easing, LayoutChangeEvent, ScaledSize } from 'react-native';
 import Svg, { Defs, LinearGradient, Stop, Rect, Pattern, Circle } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
 import { colors } from '../../theme/colors';
@@ -22,6 +21,7 @@ import { typography } from '../../theme/typography';
 import { NeoDotsButton } from './NeoDotsButton';
 import { WidgetPageIndicator } from '../widgets/WidgetPageIndicator';
 import { BackgroundTexture } from './BackgroundTexture';
+import { useScreenOverlay } from '../layout/ScreenOverlayContext';
 
 export const CARD_RADIUS = 6;
 
@@ -68,9 +68,11 @@ export const NeoCard: React.FC<NeoCardProps> = ({
   const animationProgress = useRef(new Animated.Value(0)).current;
   const cardWrapperRef = useRef<View | null>(null);
   const [transitionState, setTransitionState] = useState<'idle' | 'opening' | 'closing'>('idle');
-  
+
   // Generate unique IDs for SVG gradients to avoid conflicts
   const cardId = useRef(Math.random().toString(36).substring(2, 11)).current;
+  const overlayManager = useScreenOverlay();
+  const overlayKey = useRef(`neo-card-overlay-${cardId}`).current;
 
   // Helper to create gradient stops (reused across multiple gradients)
   const gradientStops = [
@@ -259,7 +261,7 @@ export const NeoCard: React.FC<NeoCardProps> = ({
       })
     : 1;
 
-  const expandedHeader = (
+  const expandedHeader = useMemo(() => (
     <View style={styles.titleContainerSticky}>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{title}</Text>
@@ -271,7 +273,120 @@ export const NeoCard: React.FC<NeoCardProps> = ({
         <View style={styles.greyLine} />
       </View>
     </View>
-  );
+  ), [title, onExpand, overlayVisible]);
+
+  const overlayContent = useMemo(() => {
+    if (!overlayVisible) {
+      return null;
+    }
+
+    return (
+      <View style={styles.overlayRoot} pointerEvents="box-none">
+        <BackgroundTexture />
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          <Animated.View
+            style={[
+              styles.modalOverlay,
+              {
+                opacity: overlayOpacity,
+                top: expandedTopOffset,
+                bottom: expandedBottomOffset,
+              },
+            ]}
+            pointerEvents="none"
+          >
+            <BlurView intensity={20} style={StyleSheet.absoluteFill} />
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.expandedCardContainer,
+              animatedCardPosition,
+              {
+                borderRadius: animatedBorderRadius,
+                paddingHorizontal: animatedPaddingHorizontal,
+                paddingTop: animatedPaddingTop,
+                paddingBottom: animatedPaddingBottom,
+                borderWidth: animatedBorderWidth,
+                shadowOpacity: animatedShadowOpacity,
+                backgroundColor: animatedBackgroundColor,
+              },
+            ]}
+          >
+            <BackgroundTexture />
+            {!shouldRenderExpandedContent && (
+              <View style={styles.expandedPlaceholder} pointerEvents="none">
+                {expandedHeader}
+              </View>
+            )}
+            {shouldRenderExpandedContent && (
+              <Animated.View
+                style={[styles.expandedCardContentWrapper, { opacity: contentOpacity }]}
+              >
+                <View style={styles.expandedSafeArea}>
+                  <ScrollView
+                    ref={expandedScrollViewRef}
+                    style={styles.expandedScrollView}
+                    contentContainerStyle={styles.expandedScrollContent}
+                    showsVerticalScrollIndicator={true}
+                    stickyHeaderIndices={[0]}
+                    onLayout={(event) => {
+                      const { height } = event.nativeEvent.layout;
+                      setScrollViewHeight(height);
+                    }}
+                  >
+                    {expandedHeader}
+                    <View
+                      style={[
+                        styles.expandedContent,
+                        scrollViewHeight > 0 && { minHeight: Math.max(scrollViewHeight - 80, 400) },
+                      ]}
+                    >
+                      <BackgroundTexture />
+                      <View style={styles.expandedContentInner}>
+                        {expandedView}
+                      </View>
+                    </View>
+                  </ScrollView>
+                </View>
+              </Animated.View>
+            )}
+          </Animated.View>
+
+        </View>
+      </View>
+    );
+  }, [
+    overlayVisible,
+    overlayOpacity,
+    expandedTopOffset,
+    expandedBottomOffset,
+    animatedCardPosition,
+    animatedBorderRadius,
+    animatedPaddingHorizontal,
+    animatedPaddingTop,
+    animatedPaddingBottom,
+    animatedBorderWidth,
+    animatedShadowOpacity,
+    animatedBackgroundColor,
+    shouldRenderExpandedContent,
+    contentOpacity,
+    expandedHeader,
+    scrollViewHeight,
+    expandedView,
+  ]);
+
+  useEffect(() => {
+    if (!overlayManager) {
+      return undefined;
+    }
+
+    overlayManager.setOverlay(overlayKey, overlayContent);
+
+    return () => {
+      overlayManager.setOverlay(overlayKey, null);
+    };
+  }, [overlayManager, overlayKey, overlayContent]);
 
   return (
     <>
@@ -372,82 +487,7 @@ export const NeoCard: React.FC<NeoCardProps> = ({
         </View>
       </View>
 
-      {overlayVisible && (
-        <Modal
-          transparent
-          visible={overlayVisible}
-          animationType="none"
-          statusBarTranslucent
-          onRequestClose={onExpand}
-        >
-          <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-            <Animated.View
-              style={[
-                styles.modalOverlay,
-                {
-                  opacity: overlayOpacity,
-                  top: expandedTopOffset,
-                  bottom: expandedBottomOffset,
-                },
-              ]}
-              pointerEvents="none"
-            >
-              <BlurView intensity={20} style={StyleSheet.absoluteFill} />
-            </Animated.View>
-
-            <Animated.View
-              style={[
-                styles.expandedCardContainer,
-                animatedCardPosition,
-                {
-                  borderRadius: animatedBorderRadius,
-                  paddingHorizontal: animatedPaddingHorizontal,
-                  paddingTop: animatedPaddingTop,
-                  paddingBottom: animatedPaddingBottom,
-                  borderWidth: animatedBorderWidth,
-                  shadowOpacity: animatedShadowOpacity,
-                  backgroundColor: animatedBackgroundColor,
-                },
-              ]}
-            >
-              <BackgroundTexture />
-              {!shouldRenderExpandedContent && (
-                <View style={styles.expandedPlaceholder} pointerEvents="none">
-                  {expandedHeader}
-                </View>
-              )}
-              {shouldRenderExpandedContent && (
-                <Animated.View
-                  style={[styles.expandedCardContentWrapper, { opacity: contentOpacity }]}
-                >
-                  <SafeAreaView style={styles.expandedSafeArea} edges={['bottom']}>
-                    <ScrollView
-                      ref={expandedScrollViewRef}
-                      style={styles.expandedScrollView}
-                      contentContainerStyle={styles.expandedScrollContent}
-                      showsVerticalScrollIndicator={true}
-                      stickyHeaderIndices={[0]}
-                      onLayout={(event) => {
-                        const { height } = event.nativeEvent.layout;
-                        setScrollViewHeight(height);
-                      }}
-                    >
-                      {expandedHeader}
-                      <View style={[styles.expandedContent, scrollViewHeight > 0 && { minHeight: Math.max(scrollViewHeight - 80, 400) }]}>
-                        {expandedView}
-                      </View>
-                    </ScrollView>
-                  </SafeAreaView>
-                </Animated.View>
-              )}
-            </Animated.View>
-
-            {expandedBottomOffset > 0 && (
-              <View pointerEvents="none" style={[styles.tabBarShim, { height: expandedBottomOffset }]} />
-            )}
-          </View>
-        </Modal>
-      )}
+      {!overlayManager && overlayContent}
     </>
   );
 };
@@ -558,10 +598,17 @@ const styles = StyleSheet.create({
     minHeight: '100%',
   },
   expandedContent: {
-    paddingHorizontal: 20, // Consistent padding from screen edges
-    backgroundColor: colors.cardBg,
     flexGrow: 1,
     minHeight: 400,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  expandedContentInner: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
+    backgroundColor: colors.cardBg,
   },
   modalOverlay: {
     position: 'absolute',
@@ -589,19 +636,9 @@ const styles = StyleSheet.create({
   expandedSafeArea: {
     flex: 1,
   },
-  tabBarShim: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'transparent',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    shadowColor: colors.ink,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 8,
+  overlayRoot: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 20,
   },
 });
 
