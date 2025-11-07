@@ -35,15 +35,17 @@ export const ScreenLayout: React.FC<PropsWithChildren<ScreenLayoutProps>> = ({
   const insets = useSafeAreaInsets();
 
   const computedContentStyle = useMemo(() => {
-    const DEFAULT_PADDING_BOTTOM = 100;
+    const DEFAULT_PADDING_BOTTOM = 24;
     const flattenedContentStyle = StyleSheet.flatten(contentStyle) || {};
     const providedPaddingBottom = typeof flattenedContentStyle.paddingBottom === 'number' ? flattenedContentStyle.paddingBottom : undefined;
-    const basePaddingBottom = providedPaddingBottom ?? DEFAULT_PADDING_BOTTOM;
+    const hasCustomPadding = providedPaddingBottom !== undefined;
+    const basePaddingBottom = hasCustomPadding ? providedPaddingBottom : DEFAULT_PADDING_BOTTOM;
+
     return [
       styles.scrollContent,
       contentStyle,
       {
-        paddingBottom: basePaddingBottom + insets.bottom,
+        paddingBottom: basePaddingBottom + (hasCustomPadding ? 0 : insets.bottom),
       },
     ];
   }, [contentStyle, insets.bottom]);

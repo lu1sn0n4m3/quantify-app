@@ -86,11 +86,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 9999,
-    backgroundColor: colors.screenBg,
+    backgroundColor: colors.headerBg,
   },
   contentContainer: {
     paddingTop: 90,
-    paddingBottom: 85, // Extra padding for bottom tab bar
+    paddingBottom: 28,
   },
   scrollView: {
     flex: 1,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   profileCard: {
     backgroundColor: colors.cardBg,

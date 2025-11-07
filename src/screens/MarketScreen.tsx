@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     paddingTop: 65,
-    paddingBottom: 105, // Extra padding for bottom tab bar (85) + regular padding (20)
+    paddingBottom: 28,
   },
   expandedOverlayBase: {
     position: 'absolute',

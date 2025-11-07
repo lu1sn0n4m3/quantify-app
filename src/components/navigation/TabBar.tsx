@@ -18,12 +18,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { TabBarButton } from './TabBarButton';
 import { colors } from '../../theme/colors';
+import { HomeIcon, MarketIcon, ChatIcon, AccountIcon, TabIconProps } from '../svg/TabIcons';
 
-const TAB_CONFIG = [
-  { key: 'Home', label: 'Home', icon: '🏠' },
-  { key: 'Market', label: 'Market', icon: '📊' },
-  { key: 'Chat', label: 'Chat', icon: '💬' },
-  { key: 'Account', label: 'Account', icon: '👤' },
+type TabConfig = {
+  key: string;
+  label: string;
+  Icon: React.ComponentType<TabIconProps>;
+};
+
+const TAB_CONFIG: TabConfig[] = [
+  { key: 'Home', label: 'Home', Icon: HomeIcon },
+  { key: 'Market', label: 'Market', Icon: MarketIcon },
+  { key: 'Chat', label: 'Chat', Icon: ChatIcon },
+  { key: 'Account', label: 'Account', Icon: AccountIcon },
 ];
 
 export const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
@@ -39,7 +46,7 @@ export const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
             <TabBarButton
               key={tab.key}
               label={tab.label}
-              icon={tab.icon}
+              Icon={tab.Icon}
               isActive={isActive}
               onPress={() => {
                 const event = navigation.emit({

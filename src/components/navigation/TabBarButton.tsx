@@ -16,20 +16,25 @@ import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
+import { TabIconProps } from '../svg/TabIcons';
+
+type IconComponent = React.ComponentType<TabIconProps>;
 
 export type TabBarButtonProps = {
   label: string;
-  icon: string;
+  Icon: IconComponent;
   isActive: boolean;
   onPress: () => void;
 };
 
 export const TabBarButton: React.FC<TabBarButtonProps> = ({
   label,
-  icon,
+  Icon,
   isActive,
   onPress,
 }) => {
+  const iconColor = isActive ? colors.ink : colors.inkMuted;
+
   return (
     <TouchableOpacity
       style={styles.button}
@@ -40,7 +45,9 @@ export const TabBarButton: React.FC<TabBarButtonProps> = ({
       accessibilityState={{ selected: isActive }}
     >
       <View style={styles.content}>
-        <Text style={[styles.icon, isActive && styles.iconActive]}>{icon}</Text>
+        <View style={styles.iconWrapper}>
+          <Icon color={iconColor} size={24} />
+        </View>
         <Text style={[styles.label, isActive && styles.labelActive]}>{label}</Text>
         {isActive && <View style={styles.activeIndicator} />}
       </View>
@@ -61,13 +68,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
-  icon: {
-    fontSize: 24,
+  iconWrapper: {
     marginBottom: 4,
-    opacity: 0.6,
-  },
-  iconActive: {
-    opacity: 1,
   },
   label: {
     ...typography.body,

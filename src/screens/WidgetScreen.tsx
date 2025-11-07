@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 9999,
-    backgroundColor: colors.screenBg,
+    backgroundColor: colors.headerBg,
   },
   mainContent: {
     paddingTop: 90,
@@ -221,6 +221,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   expandedScrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
 });
