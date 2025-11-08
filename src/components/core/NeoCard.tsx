@@ -275,6 +275,9 @@ export const NeoCard: React.FC<NeoCardProps> = ({
     </View>
   ), [title, onExpand, overlayVisible]);
 
+  const bottomSafePadding = useMemo(() => expandedBottomOffset + 24, [expandedBottomOffset]);
+  const contentMinHeight = useMemo(() => Math.max(targetHeight, 400), [targetHeight]);
+
   const overlayContent = useMemo(() => {
     if (!overlayVisible) {
       return null;
@@ -336,14 +339,11 @@ export const NeoCard: React.FC<NeoCardProps> = ({
                     }}
                   >
                     {expandedHeader}
-                    <View
-                      style={[
-                        styles.expandedContent,
-                        scrollViewHeight > 0 && { minHeight: Math.max(scrollViewHeight - 80, 400) },
-                      ]}
-                    >
+                    <View style={[styles.expandedContentScrollBody, { minHeight: contentMinHeight }]}>
                       <BackgroundTexture />
-                      <View style={styles.expandedContentInner}>
+                      <View
+                        style={[styles.expandedContentInner, { minHeight: contentMinHeight, paddingBottom: bottomSafePadding }]}
+                      >
                         {expandedView}
                       </View>
                     </View>
@@ -374,6 +374,8 @@ export const NeoCard: React.FC<NeoCardProps> = ({
     expandedHeader,
     scrollViewHeight,
     expandedView,
+    bottomSafePadding,
+    contentMinHeight,
   ]);
 
   useEffect(() => {
@@ -447,7 +449,9 @@ export const NeoCard: React.FC<NeoCardProps> = ({
             </View>
           )}
 
-          <Animated.View style={[styles.contentLayer, { opacity: condensedOpacity }]}
+          <Animated.View
+            style={[styles.contentLayer, { opacity: condensedOpacity }]}
+            pointerEvents={shouldShowCondensed ? 'auto' : 'none'}
           >
             {shouldShowCondensed && (
               <View style={styles.titleContainer}>
@@ -458,15 +462,17 @@ export const NeoCard: React.FC<NeoCardProps> = ({
               </View>
             )}
 
-            {shouldShowCondensed && totalPages > 0 ? (
+            {totalPages > 0 && (
               <ScrollView
                 ref={scrollViewRef}
                 horizontal
                 pagingEnabled
+                scrollEnabled={shouldShowCondensed}
                 showsHorizontalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
                 style={styles.scrollView}
+                pointerEvents={shouldShowCondensed ? 'auto' : 'none'}
                 onLayout={(event) => {
                   maybeUpdateWidth(event.nativeEvent.layout.width);
                 }}
@@ -478,7 +484,7 @@ export const NeoCard: React.FC<NeoCardProps> = ({
                   </View>
                 ))}
               </ScrollView>
-            ) : null}
+            )}
 
             {shouldShowCondensed && totalPages > 1 && (
               <WidgetPageIndicator currentPage={currentPage} totalPages={totalPages} />
@@ -597,18 +603,21 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     minHeight: '100%',
   },
-  expandedContent: {
-    flexGrow: 1,
+  expandedContentScrollBody: {
     minHeight: 400,
     position: 'relative',
     overflow: 'hidden',
   },
   expandedContentInner: {
-    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 24,
     backgroundColor: colors.cardBg,
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
+  },
+  expandedTail: {
+    height: 96,
+    position: 'relative',
   },
   modalOverlay: {
     position: 'absolute',
